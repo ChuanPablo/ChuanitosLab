@@ -1,2 +1,4 @@
 .idea/
 media/
+*.env
+docker-compose.yml
