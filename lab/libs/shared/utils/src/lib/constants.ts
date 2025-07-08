@@ -78,7 +78,7 @@ export const CONFIG_URL = 'config.json';
 
 const formsDisplayNames: { [key: string]: string } = {
   name: 'Skill name',
-    category: 'Category',
+  category: 'Category',
   level: 'Level',
   description: 'Description',
   yearsOfExperience: 'Years of experience',
@@ -88,7 +88,11 @@ const formsDisplayNames: { [key: string]: string } = {
   location: 'Location',
   timelineEntryType: 'Timeline entry type',
   startDate: 'Start date',
-  endDate: 'End date'
+  endDate: 'End date',
+  username: 'Username',
+  password: 'Password',
+  firstName: 'First Name',
+  lastName: 'Last Name',
 }
 
 /**

@@ -594,16 +594,16 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const errors = control.errors;
     if (errors['required']) {
-      return `${Utilities.getFormFieldNames(fieldName)} is required`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} is required`;
     }
     if (errors['maxlength']) {
-      return `${Utilities.getFormFieldNames(fieldName)} cannot exceed ${errors['maxlength'].requiredLength} characters`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot exceed ${errors['maxlength'].requiredLength} characters`;
     }
     if (errors['min']) {
-      return `${Utilities.getFormFieldNames(fieldName)} cannot be less than ${errors['min'].min}`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot be less than ${errors['min'].min}`;
     }
     if (errors['max']) {
-      return `${Utilities.getFormFieldNames(fieldName)} cannot exceed ${errors['max'].max}`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot exceed ${errors['max'].max}`;
     }
     return 'Invalid value';
   }

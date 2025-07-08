@@ -3,11 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { ConfigService } from './config.service';
 import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from '@lab/shared-utils';
 import { LocalStorageService } from "./local-storage.service";
-import { firstValueFrom, tap } from 'rxjs';
+import { catchError, firstValueFrom, map, of, tap } from 'rxjs';
 import {
   CodeVerificationResponse,
   EmailSubmissionResponse,
-  User,
   UserRegistrationResponse
 } from '@lab/shared-interfaces';
 
@@ -40,8 +39,20 @@ export class AuthService {
    * @param email
    * @returns Promise containing the response from the API
    */
-  submitEmail(email: string): Promise<EmailSubmissionResponse> {
-    return firstValueFrom(this.http.post<EmailSubmissionResponse>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.AUTH}/${API_ENDPOINTS.EMAIL_SUBMIT}/`, { email }));
+  submitEmail(email: string): Promise<EmailSubmissionResponse>  {
+    return firstValueFrom(
+      this.http.post<EmailSubmissionResponse>(
+        `${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.AUTH}/${API_ENDPOINTS.EMAIL_SUBMIT}/`, { email }
+      ).pipe(
+        tap(response => {
+          response.success = true;
+          return response;
+        }),
+        catchError(error => {
+          return of({ email, message: error.error.message, status: error.status, success: false });
+        })
+      )
+    );
   }
 
   /**

@@ -5,6 +5,4 @@ export * from './lib/footer/footer.component';
 export * from './lib/dashboard/dashboard.component';
 export * from './lib/not-found/not-found.component';
 export * from './lib/user-detail/user-detail.component';
-export * from './lib/user-detail-dialog/user-detail-dialog.component';
 export * from './lib/edit-user/edit-user.component';
-export * from './lib/edit-user-dialog/edit-user-dialog.component';

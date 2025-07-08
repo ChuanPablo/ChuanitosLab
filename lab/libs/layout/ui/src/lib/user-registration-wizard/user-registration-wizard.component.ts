@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { MatStepperModule } from '@angular/material/stepper';
@@ -12,12 +12,16 @@ import { MatCardModule } from '@angular/material/card';
 import { Router } from '@angular/router';
 import { AuthService } from '@lab/core-services';
 import { EmailSubmissionResponse, CodeVerificationResponse, UserRegistrationResponse } from '@lab/shared-interfaces';
+import { Utilities } from '@lab/shared-utils';
 
 /**
  * @summary Component for the user registration wizard
  * @description
- * This component provides a multi-step form for user registration.
+ * This component provides a multistep form for user registration.
  * It uses the `MatStepperModule` to navigate between form steps.
+ * It emits an event when the user registration was successful in order for a wrapping dialog to catch it and close automatically.
+ * @see GenericDialogComponent
+ * @emits wizardCompleted - Emitted when the wizard is completed
  */
 @Component({
   selector: 'lib-layout-user-registration-wizard',
@@ -37,10 +41,12 @@ import { EmailSubmissionResponse, CodeVerificationResponse, UserRegistrationResp
   styleUrls: ['./user-registration-wizard.component.scss'],
 })
 export class UserRegistrationWizardComponent implements OnInit {
+  // Event emitters
+  @Output() wizardCompleted = new EventEmitter<void>();
+
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
-  private router = inject(Router);
 
   // Form groups for each step
   emailForm!: FormGroup;
@@ -55,6 +61,8 @@ export class UserRegistrationWizardComponent implements OnInit {
   // Step tracking
   currentStep = 0;
   isEmailVerified = false;
+  isEmailSubmitted = false;
+  isRegistrationCompleted = false;
 
   ngOnInit() {
     this.initializeForms();
@@ -101,8 +109,9 @@ export class UserRegistrationWizardComponent implements OnInit {
         const email = this.emailForm.get('email')?.value;
         const response: EmailSubmissionResponse = await this.authService.submitEmail(email);
 
-        if (response.success) {
-          this.snackBar.open('Verification code sent to your email!', 'Close', {
+        if (response.success && response.message) {
+          this.isEmailSubmitted = true;
+          this.snackBar.open(response.message, 'Close', {
             duration: 5000,
             panelClass: ['success-snackbar']
           });
@@ -166,12 +175,12 @@ export class UserRegistrationWizardComponent implements OnInit {
   }
 
   private handleCodeError(error: any) {
-    let errorMessage = 'Invalid verification code. Please try again.';
+    const errorMessage = error.non_field_errors ? error.non_field_errors[0] : 'Invalid verification code. Please try again.';
 
     if (error?.non_field_errors && error.non_field_errors.length > 0) {
-      errorMessage = error.non_field_errors[0];
+      console.log(error.non_field_errors[0]);
     } else if (error?.message) {
-      errorMessage = error.message;
+      console.log(error.message);
     }
 
     this.snackBar.open(errorMessage, 'Close', {
@@ -185,6 +194,11 @@ export class UserRegistrationWizardComponent implements OnInit {
     if (this.registrationForm.valid && this.isEmailVerified) {
       this.isRegistering = true;
 
+      // disable form inputs
+      this.emailForm.disable();
+      this.codeForm.disable();
+      this.registrationForm.disable();
+
       try {
         const formData = new FormData();
         const email = this.emailForm.get('email')?.value;
@@ -193,21 +207,21 @@ export class UserRegistrationWizardComponent implements OnInit {
         formData.append('email', email);
         formData.append('username', formValues.username);
         formData.append('password', formValues.password);
-        formData.append('firstName', formValues.firstName);
-        formData.append('lastName', formValues.lastName);
+        formData.append('password_confirm', formValues.passwordConfirm);
+        formData.append('first_name', formValues.firstName);
+        formData.append('last_name', formValues.lastName);
 
         const response: UserRegistrationResponse = await this.authService.register(formData);
 
         if (response.user_id) {
+          this.isRegistrationCompleted = true;
           this.snackBar.open('Registration completed successfully!', 'Close', {
             duration: 5000,
             panelClass: ['success-snackbar']
           });
 
-          // Redirect to log in or dashboard
-          setTimeout(() => {
-            this.router.navigate(['/login']);
-          }, 2000);
+          // emit event after successful registration
+          this.wizardCompleted.emit();
         } else {
           this.handleRegistrationError(response);
         }
@@ -238,6 +252,13 @@ export class UserRegistrationWizardComponent implements OnInit {
   goBack() {
     if (this.currentStep > 0) {
       this.currentStep--;
+      // Reset completion state for steps that haven't been completed yet
+      if (this.currentStep === 0) {
+        this.isEmailVerified = false;
+        this.isRegistrationCompleted = false;
+      } else if (this.currentStep === 1) {
+        this.isRegistrationCompleted = false;
+      }
     }
   }
 
@@ -267,11 +288,11 @@ export class UserRegistrationWizardComponent implements OnInit {
   getFieldErrorMessage(fieldName: string): string {
     const control = this.registrationForm.get(fieldName);
     if (control?.hasError('required')) {
-      return `${this.getFieldDisplayName(fieldName)} is required`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} is required`;
     }
     if (control?.hasError('minlength')) {
       const minLength = control.errors?.['minlength'].requiredLength;
-      return `${this.getFieldDisplayName(fieldName)} must be at least ${minLength} characters`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} must be at least ${minLength} characters`;
     }
     return '';
   }
@@ -285,15 +306,5 @@ export class UserRegistrationWizardComponent implements OnInit {
       return 'Passwords do not match';
     }
     return '';
-  }
-
-  private getFieldDisplayName(fieldName: string): string {
-    const displayNames: { [key: string]: string } = {
-      username: 'Username',
-      password: 'Password',
-      firstName: 'First Name',
-      lastName: 'Last Name'
-    };
-    return displayNames[fieldName] || fieldName;
   }
 }
