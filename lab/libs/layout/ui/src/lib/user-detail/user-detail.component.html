@@ -1,0 +1,663 @@
+<div class="user-detail-container" *ngIf="!isLoading && currentUser">
+  <!-- Sticky Top Banner -->
+  <div class="sticky-banner-container">
+    <mat-card class="user-banner" [class.compact]="isCompact">
+      <div class="banner-content">
+        <!-- Avatar Section -->
+        <div class="avatar-section">
+          <div class="user-avatar-large" [class.compact]="isCompact">
+            <img *ngIf="currentUser.avatar"
+                 [src]="currentUser.avatar"
+                 [alt]="getFullName()"
+                 class="avatar-image">
+            <div *ngIf="!currentUser.avatar"
+                 class="avatar-fallback large"
+                 [class]="'avatar-' + currentUser.status"
+                 [class.compact]="isCompact">
+              {{ getInitials() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- User Info Section -->
+        <div class="user-info-section">
+          <div class="user-basic-info">
+            <a href="u/{{ currentUser.id}}/">
+              <h1 class="user-name" [class.compact]="isCompact">{{ getFullName() }}</h1>
+            </a>
+            <p class="user-email" [class.compact]="isCompact" [class.hidden]="isCompact">{{ currentUser.email }}</p>
+            <p class="user-username" [class.compact]="isCompact" [class.hidden]="isCompact">&commat;{{ currentUser.username }}</p>
+          </div>
+
+          <!-- Status and Metadata -->
+          <div class="user-metadata" [class.compact]="isCompact">
+            <mat-chip-set>
+              <mat-chip [color]="getStatusColor(currentUser.status)" selected [class.compact]="isCompact">
+                <mat-icon matChipAvatar *ngIf="!isCompact">
+                  {{ currentUser.status === 'active' ? 'check_circle' :
+                  currentUser.status === 'inactive' ? 'block' : 'schedule' }}
+                </mat-icon>
+                {{ currentUser.status | titlecase }}
+              </mat-chip>
+              <mat-chip *ngIf="currentUser.isStaff && !isCompact" color="accent" selected>
+                <mat-icon matChipAvatar>admin_panel_settings</mat-icon>
+                Staff
+              </mat-chip>
+              <mat-chip *ngIf="currentUser.isSuperuser && !isCompact" color="warn" selected>
+                <mat-icon matChipAvatar>supervisor_account</mat-icon>
+                Admin
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+
+          <!-- Activity Info - Hidden in compact mode -->
+          <div class="activity-metadata" [class.hidden]="isCompact">
+            <div class="activity-item" *ngIf="currentUser.lastActive">
+              <mat-icon>schedule</mat-icon>
+              <span>Last active {{ getRelativeTime(currentUser.lastActive) }}</span>
+            </div>
+            <div class="activity-item">
+              <mat-icon>calendar_today</mat-icon>
+              <span>Joined {{ getRelativeTime(currentUser.joinDate) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Links Section - Hidden in compact mode -->
+        <div class="social-links-section" [class.hidden]="isCompact" *ngIf="currentUser.linkedinLink || currentUser.githubLink || currentUser.dockerhubLink">
+          <div class="social-links">
+            <button *ngIf="currentUser.linkedinLink"
+                    mat-icon-button
+                    color="primary"
+                    matTooltip="LinkedIn Profile"
+                    (click)="openExternalLink(currentUser!.linkedinLink)">
+              <mat-icon>business</mat-icon>
+            </button>
+            <button *ngIf="currentUser.githubLink"
+                    mat-icon-button
+                    color="accent"
+                    matTooltip="GitHub Profile"
+                    (click)="openExternalLink(currentUser!.githubLink)">
+              <mat-icon>code</mat-icon>
+            </button>
+            <button *ngIf="currentUser.dockerhubLink"
+                    mat-icon-button
+                    color="primary"
+                    matTooltip="DockerHub Profile"
+                    (click)="openExternalLink(currentUser!.dockerhubLink)">
+              <mat-icon>cloud</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Actions Section -->
+        <div class="actions-section">
+          <button mat-raised-button color="primary" (click)="onEditUser()" [class.compact]="isCompact">
+            <mat-icon>edit</mat-icon>
+            <span [class.hidden]="isCompact">Edit Profile</span>
+          </button>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Scrollable Content Container -->
+  <div class="scrollable-content" #scrollContainer (scroll)="onScroll($event)" [class.compact]="isCompact">
+    <!-- Main Content Container -->
+    <div class="main-content">
+      <!-- Left Side Panel - Skills -->
+      <div class="side-panel">
+        <mat-card class="skills-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>psychology</mat-icon>
+              Skills
+              <mat-chip matBadge="{{userSkills.length}}" matBadgeSize="small" matBadgeColor="primary">
+                {{userSkills.length}}
+              </mat-chip>
+            </mat-card-title>
+            <div class="header-actions">
+              <button mat-icon-button
+                      (click)="onAddSkill()"
+                      matTooltip="Add Skill"
+                      [disabled]="showSkillForm"
+                      type="button">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <!-- Skill Form -->
+            <div class="skill-form-container" *ngIf="showSkillForm">
+              <form [formGroup]="skillForm" (ngSubmit)="onSubmitSkill()" class="skill-form">
+                <div class="form-header">
+                  <h3>{{ editingSkillId ? 'Edit Skill' : 'Add New Skill' }}</h3>
+                  <button type="button" mat-icon-button (click)="onCancelSkillForm()" matTooltip="Cancel">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Skill Name</mat-label>
+                    <input matInput formControlName="name" placeholder="e.g., Angular, Python, Communication">
+                    <mat-error>{{ getFieldErrorMessage('name') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row two-column">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Category</mat-label>
+                    <mat-select formControlName="category">
+                      <mat-option *ngFor="let category of skillCategories" [value]="category.value">
+                        {{ category.label }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error>{{ getFieldErrorMessage('category') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Level</mat-label>
+                    <mat-select formControlName="level">
+                      <mat-option *ngFor="let level of skillLevels" [value]="level.value">
+                        {{ level.label }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error>{{ getFieldErrorMessage('level') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row two-column">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Years of Experience</mat-label>
+                    <input matInput type="number" formControlName="yearsOfExperience" min="0" max="50">
+                    <mat-error>{{ getFieldErrorMessage('yearsOfExperience') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Visibility</mat-label>
+                    <mat-select formControlName="visibility">
+                      <mat-option *ngFor="let visibility of visibilityOptions" [value]="visibility.value">
+                        {{ visibility.label }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error>{{ getFieldErrorMessage('visibility') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Description (Optional)</mat-label>
+                    <textarea matInput formControlName="description" rows="3" placeholder="Additional details about this skill"></textarea>
+                    <mat-error>{{ getFieldErrorMessage('description') }}</mat-error>
+                  </mat-form-field>
+                </div>
+                <div class="form-row">
+                  <lib-shared-ui-pdf-upload-control
+                    formControlName="documentation"
+                    label="PDF Document"
+                    hint="Upload your PDF document (max 10MB)">
+                  </lib-shared-ui-pdf-upload-control>
+                </div>
+                <div class="form-actions">
+                  <button type="button" mat-button (click)="onCancelSkillForm()" [disabled]="isSubmittingSkill">
+                    Cancel
+                  </button>
+                  <button type="submit" mat-raised-button color="primary" [disabled]="isSubmittingSkill || skillForm.invalid">
+                    <mat-spinner diameter="20" *ngIf="isSubmittingSkill"></mat-spinner>
+                    <span *ngIf="!isSubmittingSkill">{{ editingSkillId ? 'Update' : 'Add' }} Skill</span>
+                    <span *ngIf="isSubmittingSkill">{{ editingSkillId ? 'Updating' : 'Adding' }}...</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Technical Skills -->
+            <mat-expansion-panel *ngIf="technicalSkills.length > 0" [expanded]="true">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>code</mat-icon>
+                  Technical Skills
+                  <mat-chip matBadge="{{technicalSkills.length}}" matBadgeSize="small">
+                    {{technicalSkills.length}}
+                  </mat-chip>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="skills-list">
+                <div *ngFor="let skill of technicalSkills; let i = index" class="skill-item">
+                  <!-- Show normal skill chip with edit/delete buttons -->
+                  <div class="skill-chip-container">
+                    <mat-chip [color]="getSkillLevelColor(skill.level)"
+                              [matTooltip]="skill.description || skill.levelDisplay">
+                      <span class="skill-name">{{ skill.name }}</span>
+                      <mat-icon *ngIf="skill.yearsOfExperience" matChipTrailingIcon>
+                        access_time
+                      </mat-icon>
+                    </mat-chip>
+                    <div class="skill-details" *ngIf="skill.yearsOfExperience || skill.levelDisplay">
+                      <span *ngIf="skill.levelDisplay" class="skill-level">{{ skill.levelDisplay }}</span>
+                      <span *ngIf="skill.yearsOfExperience" class="skill-experience">
+                        {{ skill.yearsOfExperience }} years
+                      </span>
+                    </div>
+                    <div class="skill-actions">
+                      <button mat-icon-button [matMenuTriggerFor]="skillActionsMenu"
+                              (menuOpened)="setSelectedSkill(skill)"
+                              matTooltip="More options"
+                              class="skill-action-btn">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-expansion-panel>
+
+            <!-- Language Skills -->
+            <mat-expansion-panel *ngIf="languageSkills.length > 0" [expanded]="true">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>translate</mat-icon>
+                  Languages
+                  <mat-chip matBadge="{{languageSkills.length}}" matBadgeSize="small">
+                    {{languageSkills.length}}
+                  </mat-chip>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="skills-list">
+                <div *ngFor="let skill of languageSkills; let i = index" class="skill-item">
+                  <!-- Show normal skill chip with edit/delete buttons -->
+                  <div class="skill-chip-container">
+                    <mat-chip [color]="getSkillLevelColor(skill.level)"
+                              [matTooltip]="skill.description || skill.levelDisplay">
+                      <span class="skill-name">{{ skill.name }}</span>
+                    </mat-chip>
+                    <div class="skill-details" *ngIf="skill.yearsOfExperience || skill.levelDisplay">
+                      <span *ngIf="skill.levelDisplay" class="skill-level">{{ skill.levelDisplay }}</span>
+                      <span *ngIf="skill.yearsOfExperience" class="skill-experience">
+                        {{ skill.yearsOfExperience }} years
+                      </span>
+                    </div>
+                    <div class="skill-actions">
+                      <button mat-icon-button [matMenuTriggerFor]="skillActionsMenu"
+                              (menuOpened)="setSelectedSkill(skill)"
+                              matTooltip="More options"
+                              class="skill-action-btn">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-expansion-panel>
+
+            <!-- Other Skills -->
+            <mat-expansion-panel *ngIf="otherSkills.length > 0" [expanded]="true">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <mat-icon>lightbulb</mat-icon>
+                  Other Skills
+                  <mat-chip matBadge="{{otherSkills.length}}" matBadgeSize="small">
+                    {{otherSkills.length}}
+                  </mat-chip>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="skills-list">
+                <div *ngFor="let skill of otherSkills; let i = index" class="skill-item">
+                  <!-- Show normal skill chip with edit/delete buttons -->
+                  <div class="skill-chip-container">
+                    <mat-chip [color]="getSkillLevelColor(skill.level)"
+                              [matTooltip]="skill.description || skill.levelDisplay">
+                      <span class="skill-name">{{ skill.name }}</span>
+                    </mat-chip>
+                    <div class="skill-details" *ngIf="skill.yearsOfExperience || skill.levelDisplay">
+                      <span *ngIf="skill.levelDisplay" class="skill-level">{{ skill.levelDisplay }}</span>
+                      <span *ngIf="skill.yearsOfExperience" class="skill-experience">
+                        {{ skill.yearsOfExperience }} years
+                      </span>
+                    </div>
+                    <div class="skill-actions">
+                      <button mat-icon-button [matMenuTriggerFor]="skillActionsMenu"
+                              (menuOpened)="setSelectedSkill(skill)"
+                              matTooltip="More options"
+                              class="skill-action-btn">
+                        <mat-icon>more_vert</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-expansion-panel>
+
+            <!-- No Skills Message -->
+            <div *ngIf="userSkills.length === 0" class="empty-state">
+              <mat-icon>psychology_alt</mat-icon>
+              <p>No skills added yet</p>
+              <button mat-raised-button color="primary" (click)="onAddSkill()">
+                Add First Skill
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Shared skill actions menu -->
+      <mat-menu #skillActionsMenu="matMenu">
+        <button mat-menu-item (click)="onEditSkill(selectedSkill)" *ngIf="selectedSkill">
+          <mat-icon>edit</mat-icon>
+          <span>Edit skill</span>
+        </button>
+        <button mat-menu-item (click)="onDeleteSkill(selectedSkill)" *ngIf="selectedSkill" class="delete-menu-item">
+          <mat-icon>delete</mat-icon>
+          <span>Delete skill</span>
+        </button>
+      </mat-menu>
+
+      <!-- Right Main Panel - Timeline -->
+      <div class="main-panel">
+        <mat-card class="timeline-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon>timeline</mat-icon>
+              Timeline
+              <mat-chip matBadge="{{timelineEntries.length}}" matBadgeSize="small" matBadgeColor="primary">
+                {{timelineEntries.length}}
+              </mat-chip>
+            </mat-card-title>
+            <div class="header-actions">
+              <button mat-icon-button
+                      (click)="onAddTimelineEntry()"
+                      matTooltip="Add Timeline Entry"
+                      [disabled]="showTimelineForm"
+                      type="button">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <!-- Timeline Form -->
+            <div class="timeline-form-container" *ngIf="showTimelineForm">
+              <form [formGroup]="timelineForm" (ngSubmit)="onSubmitTimeline()" class="timeline-form">
+                <div class="form-header">
+                  <h3>{{ editingTimelineId ? 'Edit Timeline Entry' : 'Add New Timeline Entry' }}</h3>
+                  <button type="button" mat-icon-button (click)="onCancelTimelineForm()" matTooltip="Cancel">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Title</mat-label>
+                    <input matInput formControlName="title" placeholder="e.g., Software Engineer, Bachelor of Science">
+                    <mat-error>{{ getFieldErrorMessage('title', 'timeline') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row two-column">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Organisation</mat-label>
+                    <input matInput formControlName="organisation" placeholder="e.g., Google, University of California">
+                    <mat-error>{{ getFieldErrorMessage('organisation', 'timeline') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Location</mat-label>
+                    <input matInput formControlName="location" placeholder="e.g., San Francisco, CA">
+                    <mat-error>{{ getFieldErrorMessage('location', 'timeline') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row two-column">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Type</mat-label>
+                    <mat-select formControlName="timelineEntryType">
+                      <mat-option *ngFor="let type of timelineEntryTypes" [value]="type.value">
+                        {{ type.label }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error>{{ getFieldErrorMessage('timelineEntryType', 'timeline') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Visibility</mat-label>
+                    <mat-select formControlName="visibility">
+                      <mat-option *ngFor="let visibility of visibilityOptions" [value]="visibility.value">
+                        {{ visibility.label }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-error>{{ getFieldErrorMessage('visibility', 'timeline') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row two-column">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Start Date</mat-label>
+                    <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                    <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                    <mat-error>{{ getFieldErrorMessage('startDate', 'timeline') }}</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>End Date (Optional)</mat-label>
+                    <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                    <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                    <mat-error>{{ getFieldErrorMessage('endDate', 'timeline') }}</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Description (Optional)</mat-label>
+                    <textarea matInput formControlName="description" rows="3" placeholder="Additional details about this experience"></textarea>
+                    <mat-error>{{ getFieldErrorMessage('description', 'timeline') }}</mat-error>
+                  </mat-form-field>
+                </div>
+                <div class="form-row">
+                  <lib-shared-ui-pdf-upload-control
+                    formControlName="documentation"
+                    label="PDF Document"
+                    hint="Upload your PDF document (max 10MB)">
+                  </lib-shared-ui-pdf-upload-control>
+                </div>
+                <div class="form-actions">
+                  <button type="button" mat-button (click)="onCancelTimelineForm()" [disabled]="isSubmittingTimeline">
+                    Cancel
+                  </button>
+                  <button type="submit" mat-raised-button color="primary" [disabled]="isSubmittingTimeline || timelineForm.invalid">
+                    <mat-spinner diameter="20" *ngIf="isSubmittingTimeline"></mat-spinner>
+                    <span *ngIf="!isSubmittingTimeline">{{ editingTimelineId ? 'Update' : 'Add' }} Entry</span>
+                    <span *ngIf="isSubmittingTimeline">{{ editingTimelineId ? 'Updating' : 'Adding' }}...</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <mat-tab-group>
+              <!-- All Timeline Entries -->
+              <mat-tab label="All">
+                <ng-template mat-tab-label>
+                  All ({{ timelineEntries.length }})
+                </ng-template>
+                <div class="timeline-content">
+                  <div *ngIf="timelineEntries.length === 0" class="empty-state">
+                    <mat-icon>timeline</mat-icon>
+                    <p>No timeline entries yet</p>
+                    <button mat-raised-button color="primary" (click)="onAddTimelineEntry()">
+                      Add First Entry
+                    </button>
+                  </div>
+
+                  <div *ngFor="let entry of timelineEntries; let isLast = last" class="timeline-entry">
+                    <div class="timeline-entry-header">
+                      <div class="entry-icon">
+                        <mat-icon [color]="entry.timelineEntryType.toLowerCase() === 'job' ? 'primary' : 'accent'">
+                          {{ entry.timelineEntryType.toLowerCase() === 'job' ? 'work' : 'school' }}
+                        </mat-icon>
+                      </div>
+                      <div class="entry-info">
+                        <h3 class="entry-title">{{ entry.title }}</h3>
+                        <p class="entry-organisation">{{ entry.organisation }}</p>
+                        <div class="entry-metadata">
+                          <span class="entry-dates">{{ formatDateRange(entry.startDate, entry.endDate) }}</span>
+                          <span class="entry-duration">{{ calculateDuration(entry.startDate, entry.endDate) }}</span>
+                          <span *ngIf="entry.location" class="entry-location">
+                            <mat-icon>location_on</mat-icon>
+                            {{ entry.location }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div *ngIf="entry.description" class="timeline-entry-description">
+                      <p>{{ entry.description }}</p>
+                    </div>
+                    <div class="timeline-entry-actions">
+                      <button mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                    <mat-divider *ngIf="!isLast"></mat-divider>
+                  </div>
+                </div>
+              </mat-tab>
+
+              <!-- Work Experience -->
+              <mat-tab label="Work">
+                <ng-template mat-tab-label>
+                  Job ({{ jobEntries.length }})
+                </ng-template>
+                <div class="timeline-content">
+                  <div *ngIf="jobEntries.length === 0" class="empty-state">
+                    <mat-icon>work</mat-icon>
+                    <p>No work experience added</p>
+                  </div>
+
+                  <div *ngFor="let entry of jobEntries; let isLast = last" class="timeline-entry">
+                    <div class="timeline-entry-header">
+                      <div class="entry-icon">
+                        <mat-icon color="primary">work</mat-icon>
+                      </div>
+                      <div class="entry-info">
+                        <h3 class="entry-title">{{ entry.title }}</h3>
+                        <p class="entry-organisation">{{ entry.organisation }}</p>
+                        <div class="entry-metadata">
+                          <span class="entry-dates">{{ formatDateRange(entry.startDate, entry.endDate) }}</span>
+                          <span class="entry-duration">{{ calculateDuration(entry.startDate, entry.endDate) }}</span>
+                          <span *ngIf="entry.location" class="entry-location">
+                            <mat-icon>location_on</mat-icon>
+                            {{ entry.location }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div *ngIf="entry.description" class="timeline-entry-description">
+                      <p>{{ entry.description }}</p>
+                    </div>
+                    <div class="timeline-entry-actions">
+                      <button mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                    <mat-divider *ngIf="!isLast"></mat-divider>
+                  </div>
+                </div>
+              </mat-tab>
+
+              <!-- Education -->
+              <mat-tab label="Education">
+                <ng-template mat-tab-label>
+                  Education ({{educationEntries.length}})
+                </ng-template>
+                <div class="timeline-content">
+                  <div *ngIf="educationEntries.length === 0" class="empty-state">
+                    <mat-icon>school</mat-icon>
+                    <p>No education entries added</p>
+                  </div>
+
+                  <div *ngFor="let entry of educationEntries; let isLast = last" class="timeline-entry">
+                    <div class="timeline-entry-header">
+                      <div class="entry-icon">
+                        <mat-icon color="accent">school</mat-icon>
+                      </div>
+                      <div class="entry-info">
+                        <h3 class="entry-title">{{ entry.title }}</h3>
+                        <p class="entry-organisation">{{ entry.organisation }}</p>
+                        <div class="entry-metadata">
+                          <span class="entry-dates">{{ formatDateRange(entry.startDate, entry.endDate) }}</span>
+                          <span class="entry-duration">{{ calculateDuration(entry.startDate, entry.endDate) }}</span>
+                          <span *ngIf="entry.location" class="entry-location">
+                            <mat-icon>location_on</mat-icon>
+                            {{ entry.location }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div *ngIf="entry.description" class="timeline-entry-description">
+                      <p>{{ entry.description }}</p>
+                    </div>
+                    <div class="timeline-entry-actions">
+                      <button mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                    <mat-divider *ngIf="!isLast"></mat-divider>
+                  </div>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Additional Info Card -->
+    <mat-card *ngIf="currentUser.contactInfo || currentUser.additionalInfo" class="additional-info-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>info</mat-icon>
+          Additional Information
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="currentUser.contactInfo" class="info-section">
+          <h4>Contact Information</h4>
+          <p>{{ currentUser.contactInfo }}</p>
+        </div>
+        <div *ngIf="currentUser.additionalInfo" class="info-section">
+          <h4>Additional Details</h4>
+          <p>{{ currentUser.additionalInfo }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="isLoading" class="loading-container">
+  <mat-spinner></mat-spinner>
+  <p>Loading user details...</p>
+</div>
+
+<!-- Error State -->
+<div *ngIf="error && !isLoading" class="error-container">
+  <mat-icon color="warn">error</mat-icon>
+  <p>{{ error }}</p>
+  <button mat-raised-button color="primary" (click)="loadUserData()">
+    Try Again
+  </button>
+</div>

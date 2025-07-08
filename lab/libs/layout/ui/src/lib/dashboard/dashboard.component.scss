@@ -1,0 +1,26 @@
+.dashboard-container {
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container);
+
+  .spacer {
+    flex: 1;
+  }
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+
+  @media (max-width: 599px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

@@ -1,0 +1,22 @@
+<div class="dashboard-container">
+  <mat-toolbar class="dashboard-header">
+    <span>User Management Dashboard</span>
+    <span class="spacer"></span>
+    <button mat-raised-button color="primary">
+      <mat-icon>add</mat-icon>
+      Add User
+    </button>
+  </mat-toolbar>
+
+  <div class="users-grid">
+    <lib-user-card
+      *ngFor="let user of users(); trackBy: trackByUserId"
+      [user]="user"
+      [showActions]="true"
+      (editUser)="onEditUser($event)"
+      (deleteUser)="onDeleteUser($event)"
+      (toggleStatus)="onToggleStatus($event)"
+      (viewDetails)="onViewDetails($event)">
+    </lib-user-card>
+  </div>
+</div>

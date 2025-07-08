@@ -1,0 +1,129 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.login-header {
+  text-align: center;
+  padding: 24px 24px 0;
+
+  .mat-card-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 28px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .login-icon {
+    font-size: 32px;
+    height: 32px;
+    width: 32px;
+    color: #673ab7;
+  }
+
+  .mat-card-subtitle {
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0;
+
+  .forgot-password {
+    color: #673ab7;
+    text-decoration: none;
+    font-size: 14px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.login-button {
+  height: 48px;
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 16px;
+
+  .mat-spinner {
+    margin-right: 8px;
+  }
+}
+
+.login-actions {
+  padding: 0 24px 24px;
+  justify-content: center;
+
+  .signup-text {
+    text-align: center;
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+
+    .signup-link {
+      color: #673ab7;
+      text-decoration: none;
+      font-weight: 500;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 480px) {
+  .login-container {
+    padding: 16px;
+  }
+
+  .login-card {
+    .login-header {
+      padding: 16px 16px 0;
+
+      .mat-card-title {
+        font-size: 24px;
+      }
+    }
+
+    .mat-card-content {
+      padding: 16px;
+    }
+
+    .login-actions {
+      padding: 0 16px 16px;
+    }
+  }
+}

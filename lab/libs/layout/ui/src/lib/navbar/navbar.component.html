@@ -1,0 +1,121 @@
+<mat-toolbar color="primary" class="navbar-toolbar">
+  <div class="navbar-container">
+    <!-- Logo/Brand -->
+    <div class="navbar-brand">
+      <a routerLink="/" mat-button class="brand-button">
+        <mat-icon>home</mat-icon>
+        <span class="brand-text">{{ appName() || 'YourApp' }}</span>
+      </a>
+    </div>
+
+    <!-- Desktop Navigation -->
+    <div class="navbar-nav" *ngIf="!isMobile()">
+      <a routerLink="/"
+         routerLinkActive="active-link"
+         [routerLinkActiveOptions]="{exact: true}"
+         mat-button>
+        Home
+      </a>
+      <a routerLink="/"
+         routerLinkActive="active-link"
+         mat-button>
+        About
+      </a>
+      <a routerLink="/"
+         routerLinkActive="active-link"
+         mat-button>
+        Services
+      </a>
+      <a routerLink="/"
+         routerLinkActive="active-link"
+         mat-button>
+        Contact
+      </a>
+    </div>
+
+    <!-- Desktop Actions -->
+    <div class="navbar-actions" *ngIf="!isMobile() && !isLoggedIn()" routerLink="/login">
+      <button mat-stroked-button>Sign In</button>
+      <button mat-raised-button color="accent">Sign Up</button>
+    </div>
+    <div class="navbar-actions" *ngIf="!isMobile() && isLoggedIn()">
+      <button mat-stroked-button (click)="logout()">Sign out</button>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button
+      *ngIf="isMobile()"
+      mat-icon-button
+      (click)="toggleMobileMenu()"
+      aria-label="Toggle navigation menu">
+      <mat-icon>{{ isMobileMenuOpen() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+  </div>
+</mat-toolbar>
+
+<!-- Mobile Side Navigation -->
+<mat-sidenav-container
+  class="mobile-sidenav-container"
+  *ngIf="isMobile()"
+  [class.menu-open]="isMobileMenuOpen()">
+  <mat-sidenav
+    #sidenav
+    mode="over"
+    [opened]="isMobileMenuOpen()"
+    (closed)="closeMobileMenu()"
+    position="end">
+
+    <mat-nav-list>
+      <!-- Navigation Links -->
+      <a mat-list-item
+         routerLink="/"
+         routerLinkActive="active-mobile-link"
+         [routerLinkActiveOptions]="{exact: true}"
+         (click)="closeMobileMenu()">
+        <mat-icon matListItemIcon>home</mat-icon>
+        <span matListItemTitle>Home</span>
+      </a>
+
+      <a mat-list-item
+         routerLink="/about"
+         routerLinkActive="active-mobile-link"
+         (click)="closeMobileMenu()">
+        <mat-icon matListItemIcon>info</mat-icon>
+        <span matListItemTitle>About</span>
+      </a>
+
+      <a mat-list-item
+         routerLink="/services"
+         routerLinkActive="active-mobile-link"
+         (click)="closeMobileMenu()">
+        <mat-icon matListItemIcon>business</mat-icon>
+        <span matListItemTitle>Services</span>
+      </a>
+
+      <a mat-list-item
+         routerLink="/contact"
+         routerLinkActive="active-mobile-link"
+         (click)="closeMobileMenu()">
+        <mat-icon matListItemIcon>contact_mail</mat-icon>
+        <span matListItemTitle>Contact</span>
+      </a>
+
+      <mat-divider></mat-divider>
+
+      <!-- Mobile Actions -->
+      <div class="mobile-actions" *ngIf="!isLoggedIn()" routerLink="/login">
+        <button mat-stroked-button class="mobile-action-btn" (click)="closeMobileMenu()">
+          Sign In
+        </button>
+        <button mat-raised-button color="accent" class="mobile-action-btn" (click)="closeMobileMenu()">
+          Sign Up
+        </button>
+      </div>
+      <div class="mobile-actions" *ngIf="isLoggedIn()">
+        <button mat-raised-button color="accent" class="mobile-action-btn" (click)="logout()">
+          Sign Out
+        </button>
+      </div>
+    </mat-nav-list>
+  </mat-sidenav>
+</mat-sidenav-container>

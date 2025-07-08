@@ -1,0 +1,153 @@
+.navbar-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12);
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.navbar-brand {
+  .brand-button {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-decoration: none;
+
+    .brand-text {
+      margin-left: 0.5rem;
+    }
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.navbar-nav {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+
+  a {
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &.active-link {
+      background-color: rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        height: 2px;
+        background-color: currentColor;
+        border-radius: 1px;
+      }
+    }
+
+    &:hover:not(.active-link) {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+.navbar-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+// Mobile Sidenav Styles
+.mobile-sidenav-container {
+  position: fixed;
+  top: 64px; // Height of mat-toolbar
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  pointer-events: none;
+  display: none; // hidden by default
+  background: transparent;
+
+  &.menu-open{
+    display: block; // shows when open
+  }
+
+  mat-sidenav {
+    width: 280px;
+    pointer-events: auto;
+  }
+
+  mat-sidenav-content {
+    pointer-events: none;
+  }
+}
+
+.mobile-actions {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .mobile-action-btn {
+    width: 100%;
+  }
+}
+
+.active-mobile-link {
+  background-color: rgba(0, 0, 0, 0.04);
+
+  mat-icon {
+    color: var(--mat-toolbar-container-background-color, #1976d2);
+  }
+
+  span {
+    font-weight: 600;
+    color: var(--mat-toolbar-container-background-color, #1976d2);
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 599px) {
+  .navbar-container {
+    padding: 0 0.75rem;
+  }
+
+  .brand-text {
+    display: none;
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .navbar-brand .brand-button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .navbar-nav a {
+    &.active-link {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
+
+    &:hover:not(.active-link) {
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .active-mobile-link {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+}

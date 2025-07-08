@@ -1,0 +1,79 @@
+<div class="user-form-container">
+  <form [formGroup]="userForm" (ngSubmit)="onSubmitUser()" class="user-form">
+    <div class="form-header">
+      <h3>Edit User</h3>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" placeholder="e.g., address@example.com">
+        <mat-error>{{ getFieldErrorMessage('email') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="username" placeholder="enter your desired username">
+        <mat-error>{{ getFieldErrorMessage('username') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row two-column">
+      <mat-form-field appearance="outline">
+        <mat-label>First Name</mat-label>
+        <input matInput formControlName="firstName" placeholder="e.g., John">
+        <mat-error>{{ getFieldErrorMessage('firstName') }}</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Last Name</mat-label>
+        <input matInput formControlName="lastName" placeholder="e.g., Doe">
+        <mat-error>{{ getFieldErrorMessage('lastName') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <!-- AVATAR INPUT -->
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>github Link</mat-label>
+        <input matInput formControlName="githubLink" placeholder="https://www.github.com/username">
+        <mat-error>{{ getFieldErrorMessage('githubLink') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>LinkedIn Link</mat-label>
+        <input matInput formControlName="linkedinLink" placeholder="https://www.linkedin.com/in/username">
+        <mat-error>{{ getFieldErrorMessage('linkedinLink') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>dockerhub Link</mat-label>
+        <input matInput formControlName="dockerhubLink" placeholder="https://hub.docker.com/u/username">
+        <mat-error>{{ getFieldErrorMessage('dockerhubLink') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Contact Info</mat-label>
+        <textarea matInput formControlName="contactInfo" placeholder="enter your contact info such as address, phone number etc."></textarea>
+        <mat-error>{{ getFieldErrorMessage('contactInfo') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Additional Info</mat-label>
+        <textarea matInput formControlName="additionalInfo" placeholder="anything else you'd like to include"></textarea>
+        <mat-error>{{ getFieldErrorMessage('additionalInfo') }}</mat-error>
+      </mat-form-field>
+    </div>
+    <div class="form-actions">
+      <button type="button" mat-button (click)="onCancelUserForm()" [disabled]="isSubmittingUser">
+        Cancel
+      </button>
+      <button type="submit" mat-raised-button color="primary" [disabled]="isSubmittingUser || userForm.invalid">
+        <mat-spinner diameter="20" *ngIf="isSubmittingUser"></mat-spinner>
+        <span *ngIf="!isSubmittingUser">{{ user?.id ? 'Update' : 'Add' }} User</span>
+        <span *ngIf="isSubmittingUser">{{ user?.id ? 'Updating' : 'Adding' }}...</span>
+      </button>
+    </div>
+  </form>
+</div>

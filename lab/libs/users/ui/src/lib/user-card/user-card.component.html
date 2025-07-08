@@ -1,0 +1,103 @@
+<mat-card class="user-card" [class.inactive]="user.status === 'inactive'">
+  <mat-card-header>
+    <!-- Avatar -->
+    <div mat-card-avatar class="user-avatar">
+      <img *ngIf="user.avatar"
+           [src]="user.avatar"
+           [alt]="user"
+           class="avatar-image">
+      <div *ngIf="!user.avatar"
+           class="avatar-fallback"
+           [class]="'avatar-' + user.status">
+        {{ this.getInitials() }}
+      </div>
+    </div>
+
+    <!-- User Info -->
+    <mat-card-title class="user-name">
+      <a href="u/{{ user.id}}/">{{ this.getFullName() }}</a>
+    </mat-card-title>
+    <mat-card-subtitle class="user-email">{{ user.email }}</mat-card-subtitle>
+
+    <!-- Actions Menu -->
+    <div class="card-actions" *ngIf="showActions">
+      <button mat-icon-button
+              [matMenuTriggerFor]="userMenu"
+              aria-label="User actions">
+        <mat-icon>more_vert</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <button mat-menu-item (click)="onViewDetails()">
+          <mat-icon>visibility</mat-icon>
+          <span>View Details</span>
+        </button>
+        <button mat-menu-item (click)="onEdit()">
+          <mat-icon>edit</mat-icon>
+          <span>Edit</span>
+        </button>
+        <button mat-menu-item (click)="onToggleStatus()">
+          <mat-icon>{{ user.status === 'active' ? 'block' : 'check_circle' }}</mat-icon>
+          <span>{{ user.status === 'active' ? 'Deactivate' : 'Activate' }}</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="onDelete()" class="delete-action">
+          <mat-icon>delete</mat-icon>
+          <span>Delete</span>
+        </button>
+      </mat-menu>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Role and Department -->
+    <div class="user-details">
+      <div class="detail-row">
+        <mat-icon class="detail-icon">work</mat-icon>
+        <span class="detail-text">TODO User Role</span>
+      </div>
+
+      <div class="detail-row" >
+        <mat-icon class="detail-icon">business</mat-icon>
+        <span class="detail-text">TODO User Department</span>
+      </div>
+    </div>
+
+    <!-- Status Chip -->
+    <div class="status-section">
+      <mat-chip-set>
+        <mat-chip [color]="getStatusColor(user.status)" selected>
+          <mat-icon matChipAvatar>
+            {{ user.status === 'active' ? 'check_circle' :
+            user.status === 'inactive' ? 'block' : 'schedule' }}
+          </mat-icon>
+          {{ user.status | titlecase }}
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+
+    <!-- Activity Info -->
+    <div class="activity-info">
+      <div class="activity-row" *ngIf="user.lastActive">
+        <span class="activity-label">Last active:</span>
+        <span class="activity-value">{{ getRelativeTime(user.lastActive) }}</span>
+      </div>
+
+      <div class="activity-row">
+        <span class="activity-label">Joined:</span>
+        <span class="activity-value">{{ getRelativeTime(user.joinDate) }}</span>
+      </div>
+    </div>
+  </mat-card-content>
+
+  <mat-card-actions *ngIf="showActions" class="card-footer-actions">
+    <button mat-button (click)="onViewDetails()">
+      <mat-icon>visibility</mat-icon>
+      View
+    </button>
+    <button mat-button (click)="onEdit()">
+      <mat-icon>edit</mat-icon>
+      Edit
+    </button>
+  </mat-card-actions>
+</mat-card>

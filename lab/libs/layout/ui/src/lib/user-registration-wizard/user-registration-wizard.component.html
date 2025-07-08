@@ -1,0 +1,222 @@
+<div class="registration-wizard-container">
+  <mat-card class="wizard-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>person_add</mat-icon>
+        Create Your Account
+      </mat-card-title>
+      <mat-card-subtitle>Join our community in just a few steps</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-stepper [selectedIndex]="currentStep" orientation="horizontal" linear="false" #stepper>
+        
+        <!-- Step 1: Email Submission -->
+        <mat-step [stepControl]="emailForm" label="Email Address">
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">email</mat-icon>
+              <h3>Enter Your Email</h3>
+              <p>We'll send you a verification code to confirm your email address</p>
+            </div>
+
+            <form [formGroup]="emailForm" (ngSubmit)="onSubmitEmail()" class="step-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email Address</mat-label>
+                <input matInput 
+                       type="email" 
+                       formControlName="email" 
+                       placeholder="Enter your email address"
+                       [disabled]="isSubmittingEmail">
+                <mat-icon matSuffix>email</mat-icon>
+                <mat-error *ngIf="emailForm.get('email')?.invalid && emailForm.get('email')?.touched">
+                  {{ getEmailErrorMessage() }}
+                </mat-error>
+              </mat-form-field>
+
+              <div class="step-actions">
+                <button mat-raised-button 
+                        color="primary" 
+                        type="submit"
+                        [disabled]="emailForm.invalid || isSubmittingEmail"
+                        class="next-button">
+                  <mat-spinner *ngIf="isSubmittingEmail" diameter="20"></mat-spinner>
+                  <span *ngIf="!isSubmittingEmail">Send Verification Code</span>
+                  <span *ngIf="isSubmittingEmail">Sending...</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-step>
+
+        <!-- Step 2: Code Verification -->
+        <mat-step [stepControl]="codeForm" label="Verify Email">
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">verified_user</mat-icon>
+              <h3>Enter Verification Code</h3>
+              <p>We've sent a 6-digit code to <strong>{{ emailForm.get('email')?.value }}</strong></p>
+            </div>
+
+            <form [formGroup]="codeForm" (ngSubmit)="onVerifyCode()" class="step-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Verification Code</mat-label>
+                <input matInput 
+                       type="text" 
+                       formControlName="code" 
+                       placeholder="Enter 6-digit code"
+                       maxlength="6"
+                       [disabled]="isVerifyingCode">
+                <mat-icon matSuffix>lock</mat-icon>
+                <mat-error *ngIf="codeForm.get('code')?.invalid && codeForm.get('code')?.touched">
+                  {{ getCodeErrorMessage() }}
+                </mat-error>
+              </mat-form-field>
+
+              <div class="step-actions">
+                <button mat-button 
+                        type="button" 
+                        (click)="goBack()"
+                        [disabled]="isVerifyingCode"
+                        class="back-button">
+                  <mat-icon>arrow_back</mat-icon>
+                  Back
+                </button>
+                
+                <button mat-raised-button 
+                        color="primary" 
+                        type="submit"
+                        [disabled]="codeForm.invalid || isVerifyingCode"
+                        class="next-button">
+                  <mat-spinner *ngIf="isVerifyingCode" diameter="20"></mat-spinner>
+                  <span *ngIf="!isVerifyingCode">Verify Code</span>
+                  <span *ngIf="isVerifyingCode">Verifying...</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-step>
+
+        <!-- Step 3: User Registration -->
+        <mat-step [stepControl]="registrationForm" label="Complete Registration">
+          <div class="step-content">
+            <div class="step-header">
+              <mat-icon class="step-icon">person</mat-icon>
+              <h3>Complete Your Profile</h3>
+              <p>Fill in your details to complete the registration</p>
+            </div>
+
+            <form [formGroup]="registrationForm" (ngSubmit)="onCompleteRegistration()" class="step-form">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>First Name</mat-label>
+                  <input matInput 
+                         type="text" 
+                         formControlName="firstName" 
+                         placeholder="Enter your first name"
+                         [disabled]="isRegistering">
+                  <mat-icon matSuffix>person</mat-icon>
+                  <mat-error *ngIf="registrationForm.get('firstName')?.invalid && registrationForm.get('firstName')?.touched">
+                    {{ getFieldErrorMessage('firstName') }}
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="half-width">
+                  <mat-label>Last Name</mat-label>
+                  <input matInput 
+                         type="text" 
+                         formControlName="lastName" 
+                         placeholder="Enter your last name"
+                         [disabled]="isRegistering">
+                  <mat-icon matSuffix>person</mat-icon>
+                  <mat-error *ngIf="registrationForm.get('lastName')?.invalid && registrationForm.get('lastName')?.touched">
+                    {{ getFieldErrorMessage('lastName') }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Username</mat-label>
+                <input matInput 
+                       type="text" 
+                       formControlName="username" 
+                       placeholder="Choose a username"
+                       [disabled]="isRegistering">
+                <mat-icon matSuffix>account_circle</mat-icon>
+                <mat-error *ngIf="registrationForm.get('username')?.invalid && registrationForm.get('username')?.touched">
+                  {{ getFieldErrorMessage('username') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Password</mat-label>
+                <input matInput 
+                       type="password" 
+                       formControlName="password" 
+                       placeholder="Create a strong password"
+                       [disabled]="isRegistering">
+                <mat-icon matSuffix>lock</mat-icon>
+                <mat-error *ngIf="registrationForm.get('password')?.invalid && registrationForm.get('password')?.touched">
+                  {{ getFieldErrorMessage('password') }}
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Confirm Password</mat-label>
+                <input matInput 
+                       type="password" 
+                       formControlName="passwordConfirm" 
+                       placeholder="Confirm your password"
+                       [disabled]="isRegistering">
+                <mat-icon matSuffix>lock</mat-icon>
+                <mat-error *ngIf="registrationForm.get('passwordConfirm')?.invalid && registrationForm.get('passwordConfirm')?.touched">
+                  {{ getPasswordConfirmErrorMessage() }}
+                </mat-error>
+                <mat-error *ngIf="registrationForm.hasError('passwordMismatch') && registrationForm.get('passwordConfirm')?.touched">
+                  {{ getPasswordConfirmErrorMessage() }}
+                </mat-error>
+              </mat-form-field>
+
+              <div class="step-actions">
+                <button mat-button 
+                        type="button" 
+                        (click)="goBack()"
+                        [disabled]="isRegistering"
+                        class="back-button">
+                  <mat-icon>arrow_back</mat-icon>
+                  Back
+                </button>
+                
+                <button mat-raised-button 
+                        color="primary" 
+                        type="submit"
+                        [disabled]="registrationForm.invalid || !isEmailVerified || isRegistering"
+                        class="submit-button">
+                  <mat-spinner *ngIf="isRegistering" diameter="20"></mat-spinner>
+                  <span *ngIf="!isRegistering">Complete Registration</span>
+                  <span *ngIf="isRegistering">Creating Account...</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </mat-step>
+
+      </mat-stepper>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Progress indicator -->
+  <div class="progress-indicator">
+    <div class="progress-step" [class.active]="currentStep >= 0" [class.completed]="currentStep > 0">
+      <span>1</span>
+    </div>
+    <div class="progress-line" [class.completed]="currentStep > 0"></div>
+    <div class="progress-step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+      <span>2</span>
+    </div>
+    <div class="progress-line" [class.completed]="currentStep > 1"></div>
+    <div class="progress-step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+      <span>3</span>
+    </div>
+  </div>
+</div>

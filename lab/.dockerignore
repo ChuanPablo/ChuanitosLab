@@ -1,0 +1,11 @@
+node_modules
+dist
+.nx
+.git
+*.md
+.gitignore
+.eslintrc*
+jest.config*
+dockerfile
+docker-compose.yml
+.dockerignore

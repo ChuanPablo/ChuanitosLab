@@ -1,0 +1,13 @@
+.dialog-header {
+  .spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.dialog-content {
+  padding: 20px;
+  min-width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}

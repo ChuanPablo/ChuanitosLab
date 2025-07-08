@@ -1,0 +1,206 @@
+.footer {
+  margin-top: auto; // Push footer to bottom if using flexbox layout
+
+  .footer-toolbar {
+    min-height: 60px;
+    height: auto;
+    padding: 0.5rem 0;
+    background-color: var(--mat-sys-surface-container);
+    color: var(--mat-sys-on-surface-variant);
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.footer-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  &.powered-by {
+    flex: 1;
+    justify-content: center;
+  }
+
+  &.social-links {
+    gap: 0.5rem;
+  }
+}
+
+.copyright {
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+  font-weight: 400;
+}
+
+.powered-by {
+  .powered-text {
+    font-size: 0.875rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin-right: 0.5rem;
+  }
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo-button {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem !important;
+  height: auto !important;
+  min-height: 40px;
+  border-radius: 8px !important;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: var(--mat-sys-on-surface-variant);
+
+  &:hover {
+    background-color: var(--mat-sys-surface-container-high);
+    transform: translateY(-1px);
+
+    .tech-logo {
+      transform: scale(1.1);
+    }
+  }
+
+  .logo-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1; // Added to prevent text from affecting vertical alignment
+  }
+}
+
+.tech-logo {
+  // Only shared properties, no dimensions
+  transition: transform 0.2s ease;
+  display: block;
+  width: 30px;
+  height: 30px;
+
+  &.angular-logo {
+    filter: none; // Keep Angular's red color
+  }
+
+  &.truenas-logo {
+  }
+}
+
+.logo-divider {
+  height: 32px;
+  margin: 0 0.25rem;
+  background-color: var(--mat-sys-outline-variant);
+}
+
+.social-links {
+  a {
+    color: var(--mat-sys-on-surface-variant);
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--mat-sys-primary);
+      background-color: var(--mat-sys-surface-container-high);
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 599px) {
+  .footer-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .footer-section {
+    justify-content: center;
+
+    &.powered-by {
+      order: 1;
+    }
+
+    &.social-links {
+      order: 2;
+    }
+  }
+
+  .copyright {
+    order: 3;
+    font-size: 0.8rem;
+  }
+
+  .logo-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .logo-divider {
+    display: none; // Hide divider on mobile for cleaner look
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-container {
+    padding: 0 0.75rem;
+  }
+
+  .logo-button {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem !important;
+
+    .logo-text {
+      font-size: 0.7rem;
+    }
+  }
+
+  .tech-logo {
+    // Only shared properties, no dimensions
+    transition: transform 0.2s ease;
+
+    &.angular-logo {
+      width: 24px;
+      height: 24px;
+      filter: none; // Keep Angular's red color
+    }
+
+    &.jetbrains-logo {
+      width: 40px;
+      height: 26px;
+    }
+
+    &.docker-logo {
+      width: 28px;
+      height: 24px;
+    }
+
+    &.truenas-logo {
+      width: 32px;
+      height: 20px;
+      filter: brightness(0) invert(1);
+    }
+  }
+}
+
+// Dark theme adjustments
+@media (prefers-color-scheme: dark) {
+  .footer .footer-toolbar {
+    background-color: var(--mat-sys-surface-container-low);
+  }
+}
