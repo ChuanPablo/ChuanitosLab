@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAdminUser, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -94,6 +94,45 @@ class UserRegistrationView(APIView):
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        return (CustomUser.objects.all() if self.request.user.is_staff else CustomUser.objects.filter(is_active=True)).order_by('last_name')
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_staff:
+            return Response(
+                {'detail': 'Use auth/register/ for user registration. '},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().create(request, *args, **kwargs)
+
+    def perform_update(self, serializer):
+        """
+        This custom perform method handles validation and authorisation involving request data
+        Other custom update (in serializer) handles data transformations
+        """
+        user = self.request.user
+        instance = serializer.instance
+        validated_data = serializer.validated_data
+
+        # Check if the user to be updated is the same user that sends the request
+        # or if the user has staff privileges
+        if user != instance and not user.is_staff:
+            raise PermissionError('Only staff members can change other users.')
+
+        # Check if field 'is_staff' is being changed
+        # Only staff members are able to change 'staff' status
+        if 'is_staff' in validated_data and not user.is_staff:
+            raise PermissionError('Only staff members can change ''staff'' status')
+
+        serializer.save()
+
+
+class CurrentUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)

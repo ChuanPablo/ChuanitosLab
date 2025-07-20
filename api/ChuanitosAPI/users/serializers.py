@@ -74,7 +74,28 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         return user
 
 
+class AvatarField(serializers.Field):
+    def to_representation(self, value):
+        # Return URL for GET requests
+        if value.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(value.avatar.url)
+            return value.avatar.url
+        return value.avatar_url
+
+    def to_internal_value(self, data):
+        # Handle URL input - just save the URL
+        if isinstance(data, str) and data.startswith('http'):
+            return {'avatar_url': data, 'avatar': None}
+
+        # Handle regular file upload
+        return {'avatar': data, 'avatar_url': ''}
+
+
 class UserSerializer(serializers.ModelSerializer):
+    avatar = AvatarField(source='*')
+
     class Meta:
         model = CustomUser
         fields = [
@@ -99,10 +120,28 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'email',
-            'is_staff',
             'is_superuser',
             'date_created',
             'date_updated',
-            'is_active',
             'last_online'
         ]
+
+    def update(self, instance, validated_data):
+        """
+        This override of the update process, here in serializer handles manipulation after
+        validation. The custom update in the viewset handles manipulations/validation involving request data
+        """
+        # Handle the custom avatar field data
+        if 'avatar_url' in validated_data:
+            instance.avatar_url = validated_data.pop('avatar_url')
+            instance.avatar = None
+        elif 'avatar' in validated_data:
+            instance.avatar = validated_data.pop('avatar')
+            instance.avatar_url = ''
+
+        # Handle other fields normally
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance

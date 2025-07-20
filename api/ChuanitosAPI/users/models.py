@@ -37,6 +37,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=30, verbose_name='First Name', blank=True, null=True)
     last_name = models.CharField(max_length=30, verbose_name='Last Name', blank=True, null=True)
     avatar = models.ImageField(upload_to=get_user_media_path, blank=True, null=True, help_text="Upload a profile picture")
+    avatar_url = models.URLField(max_length=500, blank=True, null=True, help_text="External avatar URL")
     linkedin_link = models.CharField(max_length=100, verbose_name='Link to LinkedIn profile', blank=True, null=True)
     github_link = models.CharField(max_length=100, verbose_name='Link to github profile', blank=True, null=True)
     dockerhub_link = models.CharField(max_length=100, verbose_name='Link to docker hub profile', blank=True, null=True)
@@ -60,7 +61,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         """ Returns the URL pointing to the users profile picture """
         if self.avatar and hasattr(self.avatar, 'url'):
             return self.avatar.url
-        return ''
+        return self.avatar_url or ''
 
     def is_online(self):
         """ Check if user is currently online (active within the last 5mins) """

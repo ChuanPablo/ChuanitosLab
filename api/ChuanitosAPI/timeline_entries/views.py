@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 
 from .models import TimelineEntry
 from .serializers import TimelineEntrySerializer
@@ -13,7 +13,7 @@ User = get_user_model()
 
 class TimelineEntryViewSet(viewsets.ModelViewSet):
     serializer_class = TimelineEntrySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
         user_id = self.kwargs.get('user_pk')
@@ -43,3 +43,4 @@ class TimelineEntryViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You can only delete your own entries")
 
         instance.delete()
+

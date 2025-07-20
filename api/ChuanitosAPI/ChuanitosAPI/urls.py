@@ -5,7 +5,7 @@ from django.urls import path, include, re_path
 from django.views.static import serve
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from users.views import CodeVerificationView, EmailSubmissionView, UserRegistrationView
+from users.views import CodeVerificationView, EmailSubmissionView, UserRegistrationView, CurrentUserView
 from .api_router import urlpatterns as api_urls
 
 urlpatterns = [
@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/auth/email-submit/', EmailSubmissionView.as_view(), name='email-submit'),
     path('api/auth/verify-code/', CodeVerificationView.as_view(), name='verify-code'),
     path('api/auth/register/', UserRegistrationView.as_view(), name='register'),
+    path('api/users/me', CurrentUserView.as_view(), name='current-user'),
     re_path(r'^static/(?P<path>.*)$', serve, {'document_root': settings.STATIC_ROOT}),
 ]
 
