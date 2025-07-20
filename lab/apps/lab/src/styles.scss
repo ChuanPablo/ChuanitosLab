@@ -41,6 +41,33 @@ a:visited {
   }
 }
 
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #f44336;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// Global button styles to fix mat-spinner alignment
+button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+
+  mat-spinner {
+    margin-right: 8px;
+  }
+}
+
 .mobile-sidenav-container.menu-open .mat-drawer-backdrop {
   visibility: visible !important;
   background: rgba(0, 0, 0, 0.75) !important;
@@ -279,4 +306,24 @@ a:visited {
       }
     }
   }
+}
+
+::ng-deep {
+  .success-snackbar {
+    .mat-mdc-snack-bar-container {
+      background-color: #d4edda;
+      color: #155724;
+    }
+  }
+
+  .error-snackbar {
+    .mat-mdc-snack-bar-container {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  }
+}
+
+.hidden {
+  display: none !important;
 }

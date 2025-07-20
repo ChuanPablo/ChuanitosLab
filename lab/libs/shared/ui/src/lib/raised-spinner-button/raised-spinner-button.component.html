@@ -1,0 +1,18 @@
+<button mat-raised-button
+        color="primary"
+        class="custom-button"
+        (click)="onClick()"
+        [disabled]="isLoading || disabled">
+  <div class="button-content">
+    <div class="button-spinner">
+      <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
+    </div>
+    <div class="button-icon">
+      <ng-content select="mat-icon"></ng-content>
+    </div>
+    <div class="button-center">
+      <ng-content *ngIf="!isLoading"></ng-content>
+      <ng-content *ngIf="isLoading" select="[loading]"></ng-content>
+    </div>
+  </div>
+</button>

@@ -2,9 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { User, UserDto } from '@lab/shared-interfaces';
-import { API_ENDPOINTS, USER_STATUS, LOCAL_STORAGE_KEYS } from '@lab/shared-utils';
+import { ApiEndpoints, UserStatus, LocalStorageKeys } from '@lab/shared-utils';
 import { catchError, EMPTY, map, Observable, throwError } from 'rxjs';
 import { Router } from '@angular/router';
+import { AuthService } from './auth.service';
 
 /**
  * @summary Service handling all user management (except authorisation)
@@ -16,7 +17,10 @@ import { Router } from '@angular/router';
 })
 export class UserService {
   private config = inject(ConfigService)
+  private auth = inject(AuthService)
   private apiUrl = this.config.apiUrl;
+
+  private isLoggedIn = this.auth.isLoggedIn
 
   constructor(private http: HttpClient, private router: Router) {}
 
@@ -25,8 +29,8 @@ export class UserService {
    * @description retrieves token from local storage, packs it into a HttpHeaders object and returns it
    * every time it is called
    */
-  get headers(): HttpHeaders {
-    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.AUTH_TOKEN);
+  get headers(): HttpHeaders{
+    const token = localStorage.getItem(LocalStorageKeys.AuthToken);
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -53,7 +57,7 @@ export class UserService {
       additionalInfo: userDto.additional_info ? userDto.additional_info : '',
       isStaff: userDto.is_staff,
       isSuperuser: userDto.is_superuser,
-      status: userDto.is_active ? USER_STATUS.ACTIVE : USER_STATUS.INACTIVE,
+      status: userDto.is_active ? UserStatus.Active : UserStatus.Inactive,
       lastActive: new Date(userDto.last_online),
       joinDate: new Date(userDto.date_created),
     };
@@ -79,7 +83,7 @@ export class UserService {
       additional_info: user.additionalInfo,
       is_staff: user.isStaff,
       is_superuser: user.isSuperuser,
-      is_active: user.status === USER_STATUS.ACTIVE,
+      is_active: user.status === UserStatus.Active,
     };
   }
 
@@ -112,8 +116,8 @@ export class UserService {
    * @throws Observable<never> when something went wrong during fetching of user data / redirects to login page when unauthorized
    */
   getAllUsers(): Observable<User[]> {
-    console.log('Making request with URL:', `${this.apiUrl()}${API_ENDPOINTS.USERS}`);
-    return this.http.get<UserDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}`, { headers: this.headers })
+    console.log('Making request with URL:', `${this.apiUrl()}${ApiEndpoints.Users}`);
+    return this.http.get<UserDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}`, this.isLoggedIn() ? { headers: this.headers } : {})
       .pipe(
         map((users) => users.map(user => this.mapDtoToUser(user))),
         catchError(this.handleError('fetch all users'))
@@ -128,7 +132,7 @@ export class UserService {
    * @throws Observable<never> when user not found or unauthorized
    */
   getUserById(userId: number): Observable<User> {
-    return this.http.get<UserDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}`, { headers: this.headers })
+    return this.http.get<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}`, this.isLoggedIn() ? { headers: this.headers } : {})
       .pipe(
         map(userDto => this.mapDtoToUser(userDto)),
         catchError(this.handleError('fetch user by ID'))
@@ -143,7 +147,7 @@ export class UserService {
    * @throws Observable<never> when creation fails or unauthorized
    */
   createUser(user: FormData): Observable<User> {
-    return this.http.post<UserDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/`, user, { headers: this.headers })
+    return this.http.post<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/`, user, { headers: this.headers })
       .pipe(
         map(createdUserDto => this.mapDtoToUser(createdUserDto)),
         catchError(this.handleError('create user'))
@@ -159,7 +163,7 @@ export class UserService {
    * @throws Observable<never> when update fails or unauthorized
    */
   updateUser(userId: number, user: FormData): Observable<User> {
-    return this.http.patch<UserDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/`, user, { headers: this.headers })
+    return this.http.patch<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/`, user, { headers: this.headers })
       .pipe(
         map(updatedUserDto => this.mapDtoToUser(updatedUserDto)),
         catchError(this.handleError('update user'))
@@ -174,7 +178,7 @@ export class UserService {
    * @throws Observable<never> when deletion fails or unauthorized
    */
   deleteUser(userId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/`, { headers: this.headers })
+    return this.http.delete<void>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/`, { headers: this.headers })
       .pipe(
         catchError(this.handleError('delete user'))
       );
@@ -187,7 +191,7 @@ export class UserService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getCurrentUser(): Observable<User> {
-    return this.http.get<UserDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${API_ENDPOINTS.ME}`, { headers: this.headers })
+    return this.http.get<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}`, { headers: this.headers })
       .pipe(
         map(userDto => this.mapDtoToUser(userDto)),
         catchError(this.handleError('fetch current user'))

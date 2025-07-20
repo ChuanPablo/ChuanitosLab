@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { UserSkill, UserSkillDto } from '@lab/shared-interfaces';
-import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from '@lab/shared-utils';
+import { ApiEndpoints, LocalStorageKeys } from '@lab/shared-utils';
 import { catchError, EMPTY, map, Observable, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -25,7 +25,7 @@ export class SkillsService {
    * every time it is called
    */
   get headers(): HttpHeaders {
-    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.AUTH_TOKEN);
+    const token = localStorage.getItem(LocalStorageKeys.AuthToken);
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -103,7 +103,7 @@ export class SkillsService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getUserSkills(userId: number): Observable<UserSkill[]> {
-    return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.SKILLS}`, { headers: this.headers })
+    return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}`, { headers: this.headers })
       .pipe(
         map((skills) => skills.map(skillDto => this.mapDtoToSkill(skillDto))),
         catchError(this.handleError('fetch user skills'))
@@ -117,7 +117,7 @@ export class SkillsService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getCurrentUserSkills(): Observable<UserSkill[]> {
-    return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${API_ENDPOINTS.ME}/${API_ENDPOINTS.SKILLS}`, { headers: this.headers })
+    return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Skills}`, { headers: this.headers })
       .pipe(
         map((skills) => skills.map(skillDto => this.mapDtoToSkill(skillDto))),
         catchError(this.handleError('fetch current user skills'))
@@ -133,7 +133,7 @@ export class SkillsService {
    * @throws Observable<never> when creation fails or unauthorized
    */
   createSkill(userId: number, skill: FormData): Observable<UserSkill> {
-    return this.http.post<UserSkillDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.SKILLS}/`, skill, { headers: this.headers })
+    return this.http.post<UserSkillDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}/`, skill, { headers: this.headers })
       .pipe(
         map(createdSkillDto => this.mapDtoToSkill(createdSkillDto)),
         catchError(this.handleError('create skill'))
@@ -149,7 +149,7 @@ export class SkillsService {
    */
   createCurrentUserSkill(skill: Omit<UserSkill, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Observable<UserSkill> {
     const skillDto = this.mapSkillToDto(skill);
-    return this.http.post<UserSkillDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${API_ENDPOINTS.ME}/${API_ENDPOINTS.SKILLS}/`, skillDto, { headers: this.headers })
+    return this.http.post<UserSkillDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Skills}/`, skillDto, { headers: this.headers })
       .pipe(
         map(createdSkillDto => this.mapDtoToSkill(createdSkillDto)),
         catchError(this.handleError('create current user skill'))
@@ -166,7 +166,7 @@ export class SkillsService {
    * @throws Observable<never> when update fails or unauthorized
    */
   updateSkill(userId: number, skillId: number, skill: FormData): Observable<UserSkill> {
-    return this.http.patch<UserSkillDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.SKILLS}/${skillId}/`, skill, { headers: this.headers })
+    return this.http.patch<UserSkillDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}/${skillId}/`, skill, { headers: this.headers })
       .pipe(
         map(updatedSkillDto => this.mapDtoToSkill(updatedSkillDto)),
         catchError(this.handleError('update skill'))
@@ -182,7 +182,7 @@ export class SkillsService {
    * @throws Observable<never> when deletion fails or unauthorized
    */
   deleteSkill(userId: number, skillId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.SKILLS}/${skillId}/`, { headers: this.headers })
+    return this.http.delete<void>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}/${skillId}/`, { headers: this.headers })
       .pipe(
         catchError(this.handleError('delete skill'))
       );
@@ -197,7 +197,7 @@ export class SkillsService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getSkillsByCategory(userId: number, category: string): Observable<UserSkill[]> {
-    return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.SKILLS}?category=${category}`, { headers: this.headers })
+    return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}?category=${category}`, { headers: this.headers })
       .pipe(
         map((skills) => skills.map(skill => this.mapDtoToSkill(skill))),
         catchError(this.handleError('fetch skills by category'))

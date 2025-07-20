@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,6 +7,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { User } from '@lab/shared-interfaces'
+import { AvatarComponent, AvatarSize } from '@lab/shared-ui';
+import { UserAuthUtilsService } from '@lab/core-services';
 
 @Component({
   selector: 'lib-user-card',
@@ -18,19 +20,34 @@ import { User } from '@lab/shared-interfaces'
     MatIconModule,
     MatChipsModule,
     MatMenuModule,
-    MatDividerModule
+    MatDividerModule,
+    AvatarComponent,
   ],
   templateUrl: './user-card.component.html',
-  styleUrl: './user-card.component.scss'
+  styleUrl: './user-card.component.scss',
 })
 export class UserCardComponent {
+  // Inputs
   @Input() user!: User;
   @Input() showActions = true;
 
+  // Output events
   @Output() editUser = new EventEmitter<User>();
   @Output() deleteUser = new EventEmitter<User>();
   @Output() toggleStatus = new EventEmitter<User>();
   @Output() viewDetails = new EventEmitter<User>();
+
+  // AuthUtils
+  authUtils = inject(UserAuthUtilsService);
+
+  // Permission check methods
+  canEditUser(userId: number): boolean {
+    return this.authUtils.canEditUser(userId);
+  }
+
+  canDeleteUser(userId: number, targetUserIsStaff = false): boolean {
+    return this.authUtils.canDeleteUser(userId, targetUserIsStaff);
+  }
 
   onEdit() {
     this.editUser.emit(this.user);
@@ -49,7 +66,9 @@ export class UserCardComponent {
   }
 
   getInitials(): string {
-    return `${this.user.firstName?.charAt(0).toUpperCase()} ${this.user.lastName?.charAt(0).toUpperCase()}`;
+    return `${this.user.firstName?.charAt(0).toUpperCase()} ${this.user.lastName
+      ?.charAt(0)
+      .toUpperCase()}`;
   }
 
   getFullName() {
@@ -58,9 +77,12 @@ export class UserCardComponent {
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'active': return 'primary';
-      case 'pending': return 'accent';
-      default: return '';
+      case 'active':
+        return 'primary';
+      case 'pending':
+        return 'accent';
+      default:
+        return '';
     }
   }
 
@@ -86,4 +108,6 @@ export class UserCardComponent {
     }
     return `${Math.floor(diffDays / 365)} years ago`;
   }
+
+  protected readonly AvatarSize = AvatarSize;
 }

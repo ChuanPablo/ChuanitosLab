@@ -49,42 +49,6 @@
     }
   }
 
-  .user-avatar-large {
-    width: 7.5rem;
-    height: 7.5rem;
-    border-radius: 50%;
-    border: 0.25rem solid rgba(255, 255, 255, 0.3);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    transition: all 0.3s ease-in-out;
-
-    &.compact {
-      width: 3.75rem;
-      height: 3.75rem;
-      border-width: 0.125rem;
-    }
-
-    .avatar-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .avatar-fallback {
-      font-size: 2.25rem;
-      font-weight: 600;
-      color: white;
-      transition: all 0.3s ease-in-out;
-
-      &.compact {
-        font-size: 1.25rem;
-      }
-    }
-  }
-
   .user-info-section {
     flex: 1;
     min-width: 0;
@@ -260,7 +224,7 @@
   }
 
   &::-webkit-scrollbar {
-    width: 0.5rem;
+    display: none;
   }
 
   &::-webkit-scrollbar-track {
@@ -345,90 +309,6 @@ mat-card-content {
 
     &:last-child {
       margin-bottom: 0;
-    }
-
-    .skill-chip-container {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.3rem;
-      border-radius: 0.5rem;
-      transition: all 0.2s ease-in-out;
-
-      &:hover {
-        background: var(--mat-sys-surface-container-low);
-
-        .skill-actions {
-          opacity: 1;
-        }
-      }
-
-      mat-chip {
-        margin-right: 0.5rem;
-        margin-bottom: 0.25rem;
-
-        .skill-name {
-          font-weight: 500;
-        }
-
-        mat-icon[matChipTrailingIcon] {
-          font-size: 1rem;
-          width: 1rem;
-          height: 1rem;
-        }
-      }
-
-      .skill-details {
-        display: flex;
-        gap: 0.2rem;
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-left: 0.25rem;
-        flex: 1;
-
-        .skill-level {
-          font-weight: 500;
-        }
-
-        .skill-experience {
-          &::before {
-            content: "•";
-            margin-right: 0.25rem;
-          }
-        }
-      }
-
-      .skill-actions {
-        display: flex;
-        gap: 0.25rem;
-        opacity: 0;
-        transition: opacity 0.2s ease-in-out;
-
-        .skill-action-btn {
-          width: 2rem;
-          height: 2rem;
-          min-width: 2rem;
-          padding: 0;
-
-          mat-icon {
-            font-size: 1rem;
-            width: 1rem;
-            height: 1rem;
-          }
-
-          &.delete-btn {
-            color: var(--mat-sys-error);
-
-            &:hover {
-              background: var(--mat-sys-error-container);
-            }
-          }
-
-          &:hover {
-            background: var(--mat-sys-surface-container-high);
-          }
-        }
-      }
     }
   }
 
@@ -828,39 +708,6 @@ mat-chip {
   }
 }
 
-::ng-deep {
-  .success-snackbar {
-    .mat-mdc-snack-bar-container {
-      background-color: #d4edda;
-      color: #155724;
-    }
-  }
-
-  .error-snackbar {
-    .mat-mdc-snack-bar-container {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-  }
-}
-
-.hidden {
-  display: none !important;
-}
-
-// Shared skill actions menu styles
-.delete-menu-item {
-  color: var(--mat-sys-error);
-
-  &:hover {
-    background: var(--mat-sys-error-container);
-  }
-
-  mat-icon {
-    color: var(--mat-sys-error);
-  }
-}
-
 .timeline-card {
   border-radius: 0.75rem;
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
@@ -1077,18 +924,6 @@ mat-chip {
   }
 }
 
-.avatar-active {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.avatar-inactive {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-}
-
-.avatar-pending {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
 @keyframes slideIn {
   from {
     opacity: 0;
@@ -1206,24 +1041,4 @@ mat-chip {
     transform: translateY(-0.0625rem);
     box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.15);
   }
-}
-
-::ng-deep {
-  .success-snackbar {
-    .mat-mdc-snack-bar-container {
-      background-color: #d4edda;
-      color: #155724;
-    }
-  }
-
-  .error-snackbar {
-    .mat-mdc-snack-bar-container {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-  }
-}
-
-.hidden {
-  display: none !important;
 }

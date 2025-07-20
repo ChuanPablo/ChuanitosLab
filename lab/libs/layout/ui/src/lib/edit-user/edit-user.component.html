@@ -3,6 +3,13 @@
     <div class="form-header">
       <h3>Edit User</h3>
     </div>
+    <div class="form-row" *ngIf="user">
+      <lib-shared-ui-avatar
+        formControlName="avatar"
+        [user]="user"
+        (fileSelected)="onFileSelected($event)"
+        interactive></lib-shared-ui-avatar>
+    </div>
     <div class="form-row">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Email</mat-label>
@@ -12,7 +19,7 @@
     </div>
     <div class="form-row">
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Email</mat-label>
+        <mat-label>Username</mat-label>
         <input matInput formControlName="username" placeholder="enter your desired username">
         <mat-error>{{ getFieldErrorMessage('username') }}</mat-error>
       </mat-form-field>
@@ -65,8 +72,9 @@
         <mat-error>{{ getFieldErrorMessage('additionalInfo') }}</mat-error>
       </mat-form-field>
     </div>
+    <p class="error-message">{{ error ? getAllErrors(userForm) || error : '' }}</p>
     <div class="form-actions">
-      <button type="button" mat-button (click)="onCancelUserForm()" [disabled]="isSubmittingUser">
+      <button type="button" mat-button (click)="onCancelUserForm(true)" [disabled]="isSubmittingUser">
         Cancel
       </button>
       <button type="submit" mat-raised-button color="primary" [disabled]="isSubmittingUser || userForm.invalid">

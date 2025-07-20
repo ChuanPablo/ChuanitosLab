@@ -40,15 +40,12 @@
           <mat-checkbox formControlName="rememberMe">Remember me</mat-checkbox>
           <a href="#" class="forgot-password">Forgot password?</a>
         </div>
-        <button mat-raised-button
-                color="primary"
-                type="submit"
-                class="login-button full-width"
-                [disabled]="isLoading">
-          <mat-spinner diameter="20" *ngIf="isLoading"></mat-spinner>
-          <span *ngIf="!isLoading">Sign In</span>
-          <span *ngIf="isLoading">Signing In...</span>
-        </button>
+        <lib-shared-ui-raised-spinner-button class="login-button full-width"
+                              [isLoading]="isLoading"
+                              type="submit">
+          <span>Sign In</span>
+          <span loading>Signing In...</span>
+        </lib-shared-ui-raised-spinner-button>
       </form>
     </mat-card-content>
 

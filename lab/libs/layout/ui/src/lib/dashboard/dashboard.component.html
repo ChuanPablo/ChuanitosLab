@@ -2,7 +2,7 @@
   <mat-toolbar class="dashboard-header">
     <span>User Management Dashboard</span>
     <span class="spacer"></span>
-    <button mat-raised-button color="primary" (click)="onAddUser()">
+    <button *ngIf="canAddUser()" mat-raised-button color="primary" (click)="onAddUser()">
       <mat-icon>add</mat-icon>
       Add User
     </button>

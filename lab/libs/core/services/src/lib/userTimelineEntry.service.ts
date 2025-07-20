@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { UserTimelineEntry, UserTimelineEntryDto } from '@lab/shared-interfaces';
-import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from '@lab/shared-utils';
+import { ApiEndpoints, LocalStorageKeys } from '@lab/shared-utils';
 import { catchError, EMPTY, map, Observable, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -25,7 +25,7 @@ export class TimelineService {
    * every time it is called
    */
   get headers(): HttpHeaders {
-    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.AUTH_TOKEN);
+    const token = localStorage.getItem(LocalStorageKeys.AuthToken);
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -100,7 +100,7 @@ export class TimelineService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getUserTimelineEntries(userId: number): Observable<UserTimelineEntry[]> {
-    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.TIMELINE}`, { headers: this.headers })
+    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
         catchError(this.handleError('fetch user timeline entries'))
@@ -114,7 +114,7 @@ export class TimelineService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getCurrentUserTimelineEntries(): Observable<UserTimelineEntry[]> {
-    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${API_ENDPOINTS.ME}/${API_ENDPOINTS.TIMELINE}`, { headers: this.headers })
+    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Timeline}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
         catchError(this.handleError('fetch current user timeline entries'))
@@ -130,7 +130,7 @@ export class TimelineService {
    * @throws Observable<never> when creation fails or unauthorized
    */
   createTimelineEntry(userId: number, entry: FormData): Observable<UserTimelineEntry> {
-    return this.http.post<UserTimelineEntryDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.TIMELINE}/`, entry, { headers: this.headers })
+    return this.http.post<UserTimelineEntryDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}/`, entry, { headers: this.headers })
       .pipe(
         map(createdEntryDto => this.mapDtoToEntry(createdEntryDto)),
         catchError(this.handleError('create timeline entry'))
@@ -146,7 +146,7 @@ export class TimelineService {
    */
   createCurrentUserTimelineEntry(entry: Omit<UserTimelineEntry, 'id' | 'userId'>): Observable<UserTimelineEntry> {
     const entryDto = this.mapEntryToDto(entry);
-    return this.http.post<UserTimelineEntryDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${API_ENDPOINTS.ME}/${API_ENDPOINTS.TIMELINE}/`, entryDto, { headers: this.headers })
+    return this.http.post<UserTimelineEntryDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Timeline}/`, entryDto, { headers: this.headers })
       .pipe(
         map(createdEntryDto => this.mapDtoToEntry(createdEntryDto)),
         catchError(this.handleError('create current user timeline entry'))
@@ -163,7 +163,7 @@ export class TimelineService {
    * @throws Observable<never> when update fails or unauthorized
    */
   updateTimelineEntry(userId: number, entryId: number, entry: FormData): Observable<UserTimelineEntry> {
-    return this.http.patch<UserTimelineEntryDto>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.TIMELINE}/${entryId}/`, entry, { headers: this.headers })
+    return this.http.patch<UserTimelineEntryDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}/${entryId}/`, entry, { headers: this.headers })
       .pipe(
         map(updatedEntryDto => this.mapDtoToEntry(updatedEntryDto)),
         catchError(this.handleError('update timeline entry'))
@@ -179,7 +179,7 @@ export class TimelineService {
    * @throws Observable<never> when deletion fails or unauthorized
    */
   deleteTimelineEntry(userId: number, entryId: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.TIMELINE}/${entryId}/`, { headers: this.headers })
+    return this.http.delete<void>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}/${entryId}/`, { headers: this.headers })
       .pipe(
         catchError(this.handleError('delete timeline entry'))
       );
@@ -194,7 +194,7 @@ export class TimelineService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getTimelineEntriesByType(userId: number, type: string): Observable<UserTimelineEntry[]> {
-    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.USERS}/${userId}/timeline?type=${type}`, { headers: this.headers })
+    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Users}/${userId}/timeline?type=${type}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
         catchError(this.handleError('fetch timeline entries by type'))
@@ -216,7 +216,7 @@ export class TimelineService {
       end_date: endDate.toISOString()
     });
 
-    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.TIMELINE}?${params}`, { headers: this.headers })
+    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}?${params}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
         catchError(this.handleError('fetch timeline entries by date range'))
@@ -232,7 +232,7 @@ export class TimelineService {
    * @throws Observable<never> when fetch fails or unauthorized
    */
   getTimelineEntriesSorted(userId: string, order: 'asc' | 'desc' = 'desc'): Observable<UserTimelineEntry[]> {
-    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.USERS}/${userId}/${API_ENDPOINTS.TIMELINE}?sort=${order}`, { headers: this.headers })
+    return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}?sort=${order}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
         catchError(this.handleError('fetch sorted timeline entries'))

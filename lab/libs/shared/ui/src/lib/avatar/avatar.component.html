@@ -1,0 +1,53 @@
+<div class="user-avatar"
+     [class.compact]="size === AvatarSize.Compact"
+     [class.small]="size === AvatarSize.Small">
+  <img *ngIf="user.avatar"
+       [src]="user.avatar"
+       [alt]="fullName"
+       class="avatar-image" fill>
+  <div *ngIf="!user.avatar"
+       class="avatar-fallback"
+       [class]="'avatar-' + user.status"
+       [class.compact]="size === AvatarSize.Compact"
+       [class.small]="size === AvatarSize.Small"
+       [style.background-color]="backgroundColor">
+    {{ initials }}
+  </div>
+
+  <!-- Interactive overlay -->
+  <div class="highlight-overlay"
+       *ngIf="interactive"
+       (click)="fileInput.click()"
+       (keydown)="onKeyDown($event)"
+       tabindex="0"
+       role="button"
+       [attr.aria-label]="'Change avatar for ' + fullName">
+  </div>
+
+  <!-- hidden file input -->
+  <input
+    #fileInput
+    type="file"
+    accept="image/*"
+    [disabled]="!interactive"
+    (change)="onFileSelected($event)"
+    style="display: none;">
+
+  <!-- Clear button -->
+  <button
+    *ngIf="interactive && selectedFile"
+    type="button"
+    mat-icon-button
+    color="warn"
+    class="clear-button"
+    (click)="clearFile()"
+    matTooltip="Remove file">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <!-- Error display -->
+  <div *ngIf="errorMessage" class="error-message">
+    <mat-icon color="warn">error</mat-icon>
+    {{ errorMessage }}
+  </div>
+</div>

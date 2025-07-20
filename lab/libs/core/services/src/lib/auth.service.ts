@@ -1,7 +1,7 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { EventEmitter, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ConfigService } from './config.service';
-import { API_ENDPOINTS, LOCAL_STORAGE_KEYS } from '@lab/shared-utils';
+import { ApiEndpoints, LocalStorageKeys } from '@lab/shared-utils';
 import { LocalStorageService } from "./local-storage.service";
 import { catchError, firstValueFrom, map, of, tap } from 'rxjs';
 import {
@@ -9,6 +9,7 @@ import {
   EmailSubmissionResponse,
   UserRegistrationResponse
 } from '@lab/shared-interfaces';
+import { UserAuthUtilsService } from './user-auth-utils.service';
 
 /**
  * @summary Service handling all user authorisation and registration
@@ -23,6 +24,9 @@ export class AuthService {
   private apiUrl = this.config.apiUrl;
   private _isLoggedIn= signal(false);
 
+  public userLoggedOut = new EventEmitter();
+  public userLoggedIn = new EventEmitter();
+
   get isLoggedIn() {
     return this._isLoggedIn.asReadonly();
   }
@@ -30,7 +34,7 @@ export class AuthService {
   constructor(private http: HttpClient
             , private localStorageService: LocalStorageService
   ) {
-    this._isLoggedIn.set(!!this.localStorageService.get(LOCAL_STORAGE_KEYS.AUTH_TOKEN));
+    this._isLoggedIn.set(!!this.localStorageService.get(LocalStorageKeys.AuthToken));
   }
 
   /**
@@ -42,7 +46,7 @@ export class AuthService {
   submitEmail(email: string): Promise<EmailSubmissionResponse>  {
     return firstValueFrom(
       this.http.post<EmailSubmissionResponse>(
-        `${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.AUTH}/${API_ENDPOINTS.EMAIL_SUBMIT}/`, { email }
+        `${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Auth}/${ApiEndpoints.EmailSubmit}/`, { email }
       ).pipe(
         tap(response => {
           response.success = true;
@@ -63,7 +67,7 @@ export class AuthService {
    * @param code
    */
   verifyCode(email: string, code: string): Promise<CodeVerificationResponse>{
-    return firstValueFrom(this.http.post<CodeVerificationResponse>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.AUTH}/${API_ENDPOINTS.VERIFY}/`, { email, code }));
+    return firstValueFrom(this.http.post<CodeVerificationResponse>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Auth}/${ApiEndpoints.Verify}/`, { email, code }));
   }
 
   /**
@@ -73,7 +77,7 @@ export class AuthService {
    * @returns Promise containing the response from the API
    */
   register(registrationData: FormData): Promise<UserRegistrationResponse> {
-    return firstValueFrom(this.http.post<UserRegistrationResponse>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.AUTH}/${API_ENDPOINTS.REGISTER}/`, registrationData, ));
+    return firstValueFrom(this.http.post<UserRegistrationResponse>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Auth}/${ApiEndpoints.Register}/`, registrationData, ));
   }
 
   /**
@@ -83,10 +87,11 @@ export class AuthService {
    * @param password
    */
   login(email: string, password: string){
-    return this.http.post<any>(`${this.apiUrl()}/${API_ENDPOINTS.PREFIX}/${API_ENDPOINTS.TOKEN}/`, { email, password }).pipe(
+    return this.http.post<any>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Token}/`, { email, password }).pipe(
       tap( tokenResponse => {
-        this.localStorageService.set(LOCAL_STORAGE_KEYS.AUTH_TOKEN, tokenResponse.access);
+        this.localStorageService.set(LocalStorageKeys.AuthToken, tokenResponse.access);
         this._isLoggedIn.set(true);
+        this.userLoggedIn.emit();
       })
     );
   }
@@ -98,6 +103,7 @@ export class AuthService {
   logout(){
     this.localStorageService.clear();
     this._isLoggedIn.set(false);
+    this.userLoggedOut.emit();
   }
 
 }

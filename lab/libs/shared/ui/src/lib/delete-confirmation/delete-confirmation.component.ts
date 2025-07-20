@@ -14,16 +14,8 @@ interface ConfirmDeleteData {
 
 @NgComponent({
   selector: 'lib-shared-ui-delete-confirmation',
-  template: `
-    <h2 mat-dialog-title>{{ data.title }}</h2>
-    <mat-dialog-content>
-      <p>{{ data.message }}</p>
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">{{ data.cancelText }}</button>
-      <button mat-raised-button color="warn" (click)="onConfirm()">{{ data.confirmText }}</button>
-    </mat-dialog-actions>
-  `,
+  templateUrl: './delete-confirmation.component.html',
+  styleUrls: ['./delete-confirmation.component.scss'],
   standalone: true,
   imports: [CommonModule, MatDialogModule, MatButtonModule]
 })

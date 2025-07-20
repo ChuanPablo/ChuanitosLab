@@ -6,12 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDialog } from '@angular/material/dialog';
 import { User } from '@lab/shared-interfaces';
-import { UserCardComponent} from '@lab/user-ui';
-import { UserService } from '@lab/core-services';
+import { UserAuthUtilsService, UserService } from '@lab/core-services';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { GenericDialogComponent } from '@lab/shared-ui';
+import { UserCardComponent } from '../user-card/user-card.component';
 import { UserRegistrationWizardComponent } from '../user-registration-wizard/user-registration-wizard.component';
 import { EditUserComponent } from '../edit-user/edit-user.component';
 import { UserDetailComponent } from '../user-detail/user-detail.component';
@@ -30,28 +30,29 @@ import { UserDetailComponent } from '../user-detail/user-detail.component';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   private errorMessage = signal('');
-  private tempUsers!: User[]; // dummy User[] array
   private userService = inject(UserService);
+  private authUtils = inject(UserAuthUtilsService);
   private dialog = inject(MatDialog);
 
   public users: Signal<User[]> = toSignal(
     this.userService.getAllUsers().pipe(
       tap(() => this.errorMessage.set('')),
-      catchError((error: any ) => {
+      catchError((error: any) => {
         this.errorMessage.set(error.message);
         return of<User[]>([]);
       })
     ),
-    { initialValue: this.tempUsers }
+    { initialValue: [] }
   );
 
+  public canAddUser = this.authUtils.canAddUser;
+  public isAdmin = this.authUtils.isAdmin;
+
   constructor(private snackBar: MatSnackBar) {
-    effect( () => {
-      console.log('effect happening')
+    effect(() => {
       const error = this.errorMessage();
-      console.log(error);
       if (error) {
         console.log(`opening snackbar for error: ${error}`);
         this.snackBar.open(error, 'Close', {
@@ -59,59 +60,7 @@ export class DashboardComponent implements OnInit {
           panelClass: ['snack-bar'],
         });
       }
-    })
-  }
-
-  ngOnInit() {
-    this.tempUsers = [
-      {
-        id: 1,
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@company.com',
-        username: 'JohnnyFix',
-        status: 'active',
-        lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        joinDate: new Date('2023-01-15'),
-        isStaff: false,
-        isSuperuser: false,
-      },
-      {
-        id: 2,
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane.smith@company.com',
-        username: 'ThisIsJane',
-        status: 'active',
-        lastActive: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-        joinDate: new Date('2022-11-20'),
-        isStaff: false,
-        isSuperuser: false,
-      },
-      {
-        id: 3,
-        firstName: 'Mike',
-        lastName: 'Johnson',
-        email: 'mike.johnson@company.com',
-        username: 'PrisonMike',
-        status: 'inactive',
-        lastActive: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-        joinDate: new Date('2023-03-10'),
-        isStaff: false,
-        isSuperuser: false,
-      },
-      {
-        id: 4,
-        firstName: 'Sarah',
-        lastName: 'Wilson',
-        email: 'sarah.wilson@company.com',
-        username: 'SillySarah',
-        status: 'inactive',
-        joinDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        isStaff: false,
-        isSuperuser: false,
-      },
-    ];
+    });
   }
 
   trackByUserId(index: number, user: User): number {
@@ -130,9 +79,9 @@ export class DashboardComponent implements OnInit {
       maxHeight: '800px',
       panelClass: 'user-detail-dialog',
       autoFocus: false,
-      restoreFocus: false
+      restoreFocus: false,
     });
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         console.log('Dialog result:', result);
       }
@@ -147,7 +96,7 @@ export class DashboardComponent implements OnInit {
       data: {
         title: 'Edit User',
         component: EditUserComponent,
-        componentInputs: { user }
+        componentInputs: { user },
       },
       width: '95vw',
       maxWidth: '1200px',
@@ -155,10 +104,10 @@ export class DashboardComponent implements OnInit {
       maxHeight: '800px',
       panelClass: 'user-detail-dialog',
       autoFocus: false,
-      restoreFocus: false
+      restoreFocus: false,
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         console.log('Dialog result:', result);
         // Handle any actions from the dialog if needed
@@ -194,10 +143,16 @@ export class DashboardComponent implements OnInit {
       restoreFocus: false,
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed().subscribe((result) => {
       if (result) {
         console.log('Dialog result:', result);
-        // Handle any actions from the dialog if needed
+
+        // Handle editUser event from user-detail component
+        if (result.action === 'editUser' && result.data) {
+          console.log('Edit user requested from user-detail:', result.data);
+          // Close the current dialog and open edit dialog
+          this.onEditUser(result.data);
+        }
       }
     });
   }

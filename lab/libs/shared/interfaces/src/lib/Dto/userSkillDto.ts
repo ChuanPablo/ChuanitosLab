@@ -1,26 +1,26 @@
-import { VISIBILITY, SKILL } from '@lab/shared-utils';
+import { Visibility, Skill } from '@lab/shared-utils';
 
 export interface UserSkillDto {
   id: number;
   user_id: number;
   name: string;
   category:
-    | typeof SKILL.category.TECHNICAL
-    | typeof SKILL.category.LANGUAGE
-    | typeof SKILL.category.CREATIVE
-    | typeof SKILL.category.SOFT
-    | typeof SKILL.category.OTHER;
+    | typeof Skill.Category.TECHNICAL
+    | typeof Skill.Category.LANGUAGE
+    | typeof Skill.Category.CREATIVE
+    | typeof Skill.Category.SOFT
+    | typeof Skill.Category.OTHER;
   category_display: string;
   level:
-  | typeof SKILL.level.BEGINNER
-  | typeof SKILL.level.INTERMEDIATE
-  | typeof SKILL.level.ADVANCED
-  | typeof SKILL.level.EXPERT;
+  | typeof Skill.Level.Beginner
+  | typeof Skill.Level.Intermediate
+  | typeof Skill.Level.Advanced
+  | typeof Skill.Level.Expert;
   level_display: string;
   description: string | null;
   years_of_experience: number | null;
   documentation: string | null;
-  visibility: typeof VISIBILITY.PRIVATE | typeof VISIBILITY.PUBLIC;
+  visibility: typeof Visibility.Private | typeof Visibility.Public;
   created_at: Date;
   updated_at: Date;
 }

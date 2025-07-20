@@ -1,0 +1,33 @@
+<div class="skill-chip-container">
+  <mat-chip [color]="getSkillLevelColor(skill.level)"
+            [matTooltip]="skill.description || skill.levelDisplay">
+    <span class="skill-name">{{ skill.name }}</span>
+    <mat-icon *ngIf="skill.yearsOfExperience" matChipTrailingIcon>
+      access_time
+    </mat-icon>
+  </mat-chip>
+  <div class="skill-details" *ngIf="skill.yearsOfExperience || skill.levelDisplay">
+    <span *ngIf="skill.levelDisplay" class="skill-level">{{ skill.levelDisplay }}</span>
+    <span *ngIf="skill.yearsOfExperience" class="skill-experience">
+                        {{ skill.yearsOfExperience }} years
+                      </span>
+  </div>
+  <div class="skill-actions" *ngIf="canEditUser(skill.userId)">
+    <button mat-icon-button [matMenuTriggerFor]="skillActionsMenu"
+            (menuOpened)="onMenuOpened()"
+            matTooltip="More options"
+            class="skill-action-btn">
+      <mat-icon>more_vert</mat-icon>
+    </button>
+  </div>
+  <mat-menu #skillActionsMenu="matMenu">
+    <button mat-menu-item (click)="onEditSkill()" *ngIf="_menuOpened">
+      <mat-icon>edit</mat-icon>
+      <span>Edit skill</span>
+    </button>
+    <button mat-menu-item (click)="onDeleteSkill()" *ngIf="_menuOpened" class="delete-menu-item">
+      <mat-icon>delete</mat-icon>
+      <span>Delete skill</span>
+    </button>
+  </mat-menu>
+</div>

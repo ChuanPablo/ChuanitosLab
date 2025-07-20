@@ -1,4 +1,4 @@
-import { USER_STATUS } from '@lab/shared-utils';
+import { UserStatus } from '@lab/shared-utils';
 
 export interface User {
   id: number;
@@ -14,7 +14,7 @@ export interface User {
   additionalInfo?: string;
   isStaff: boolean;
   isSuperuser: boolean;
-  status: typeof USER_STATUS.ACTIVE | typeof USER_STATUS.INACTIVE;
+  status: typeof UserStatus.Active | typeof UserStatus.Inactive;
   lastActive?: Date;
   joinDate: Date;
 }

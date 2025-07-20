@@ -1,0 +1,94 @@
+.skill-chip-container {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background: var(--mat-sys-surface-container-low);
+
+    .skill-actions {
+      opacity: 1;
+    }
+  }
+
+  mat-chip {
+    margin: 0.5rem 0.25rem;
+
+    .skill-name {
+      font-weight: 500;
+    }
+
+    mat-icon[matChipTrailingIcon] {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+    }
+  }
+
+  .skill-details {
+    display: flex;
+    gap: 0.2rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-left: 0.25rem;
+    flex: 1;
+
+    .skill-level {
+      font-weight: 500;
+    }
+
+    .skill-experience {
+      &::before {
+        content: "•";
+        margin-right: 0.25rem;
+      }
+    }
+  }
+
+  .skill-actions {
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+
+    .skill-action-btn {
+      width: 2rem;
+      height: 2rem;
+      min-width: 2rem;
+      padding: 0;
+
+      mat-icon {
+        font-size: 1rem;
+        width: 1rem;
+        height: 1rem;
+      }
+
+      &.delete-btn {
+        color: var(--mat-sys-error);
+
+        &:hover {
+          background: var(--mat-sys-error-container);
+        }
+      }
+
+      &:hover {
+        background: var(--mat-sys-surface-container-high);
+      }
+    }
+  }
+}
+
+.delete-menu-item {
+  color: var(--mat-sys-error);
+
+  &:hover {
+    background: var(--mat-sys-error-container);
+  }
+
+  mat-icon {
+    color: var(--mat-sys-error);
+  }
+}

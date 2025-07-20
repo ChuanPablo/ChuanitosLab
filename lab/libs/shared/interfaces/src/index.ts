@@ -7,4 +7,6 @@ export * from './lib/Dto/userTimelineEntryDto';
 export * from './lib/ApiResponse/EmailSubmissionResponse';
 export * from './lib/ApiResponse/CodeVerificationResponse';
 export * from './lib/ApiResponse/UserRegistrationResponse';
+export * from './lib/Base/BaseFormControl'
+export * from './lib/Base/BaseFileFormControl'
 

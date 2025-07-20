@@ -1,4 +1,15 @@
-import { Component, Input, OnInit, OnDestroy, AfterViewInit, inject, ElementRef, ViewChild, ChangeDetectorRef, NgZone } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  inject,
+  ElementRef,
+  ViewChild,
+  ChangeDetectorRef,
+  EventEmitter, Output
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -20,12 +31,20 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { User, UserSkill, UserTimelineEntry } from '@lab/shared-interfaces';
-import { UserService, SkillsService, TimelineService  } from '@lab/core-services';
-import { SKILL, VISIBILITY, TIMELINE_ENTRY, Utilities } from '@lab/shared-utils';
-import { ConfirmDeleteDialogComponent, PdfUploadControlComponent } from '@lab/shared-ui';
+import { UserService, SkillsService, TimelineService, UserAuthUtilsService } from '@lab/core-services';
+import { Skill, Visibility, TimelineEntry, Utilities } from '@lab/shared-utils';
+import {
+  AvatarComponent,
+  AvatarSize,
+  ConfirmDeleteDialogComponent,
+  GenericDialogComponent,
+  PdfUploadControlComponent, RaisedSpinnerButtonComponent
+} from '@lab/shared-ui';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
+import { EditUserComponent } from '../edit-user/edit-user.component';
+import {UserSkillChipComponent} from "@lab/user-ui";
 
 interface SkillFormData {
   name: string;
@@ -48,6 +67,7 @@ interface TimelineFormData {
   documentation?: File | null;
   visibility: string;
 }
+
 
 @Component({
   selector: 'lib-layout-user-detail',
@@ -73,17 +93,23 @@ interface TimelineFormData {
     MatNativeDateModule,
     MatMenuModule,
     PdfUploadControlComponent,
+    AvatarComponent,
+    UserSkillChipComponent,
+    RaisedSpinnerButtonComponent,
   ],
   templateUrl: './user-detail.component.html',
-  styleUrl: './user-detail.component.scss'
+  styleUrl: './user-detail.component.scss',
 })
 export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
-  @Input() user?: User; // Optional - when passed from parent component
+  @Input() inputUser?: User; // Optional - when passed from parent component
   @Input() userId?: number; // Optional - when passed from parent or for override
+
+  @Output() editUser = new EventEmitter<User>();
 
   @ViewChild('scrollContainer', { static: false }) scrollContainer?: ElementRef;
 
   private userService = inject(UserService);
+  private authUtils = inject(UserAuthUtilsService);
   private skillsService = inject(SkillsService);
   private timelineService = inject(TimelineService);
   private route = inject(ActivatedRoute);
@@ -91,8 +117,14 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
+  protected readonly AvatarSize = AvatarSize;
 
-  currentUser: User | null = null;
+  // AuthUtils
+  canEditUser = (userId: number) => this.authUtils.canEditUser(userId);
+  canDeleteUser = (userId: number, targetUserIsStaff = false) =>
+    this.authUtils.canDeleteUser(userId, targetUserIsStaff);
+
+  user: User | null = null;
   userSkills: UserSkill[] = [];
   timelineEntries: UserTimelineEntry[] = [];
 
@@ -102,6 +134,9 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private scrollThreshold = 80; // Simple threshold
   private isTransitioning = false; // Lock to prevent rapid changes
+
+  // Error Message
+  errorMessage = '';
 
   // Categorized skills
   technicalSkills: UserSkill[] = [];
@@ -127,28 +162,28 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Constants for dropdowns
   skillCategories = [
-    { value: SKILL.category.TECHNICAL, label: 'Technical' },
-    { value: SKILL.category.LANGUAGE, label: 'Language' },
-    { value: SKILL.category.CREATIVE, label: 'Creative' },
-    { value: SKILL.category.SOFT, label: 'Soft Skills' },
-    { value: SKILL.category.OTHER, label: 'Other' }
+    { value: Skill.Category.TECHNICAL, label: 'Technical' },
+    { value: Skill.Category.LANGUAGE, label: 'Language' },
+    { value: Skill.Category.CREATIVE, label: 'Creative' },
+    { value: Skill.Category.SOFT, label: 'Soft Skills' },
+    { value: Skill.Category.OTHER, label: 'Other' },
   ];
 
   skillLevels = [
-    { value: SKILL.level.BEGINNER, label: 'Beginner' },
-    { value: SKILL.level.INTERMEDIATE, label: 'Intermediate' },
-    { value: SKILL.level.ADVANCED, label: 'Advanced' },
-    { value: SKILL.level.EXPERT, label: 'Expert' }
+    { value: Skill.Level.Beginner, label: 'Beginner' },
+    { value: Skill.Level.Intermediate, label: 'Intermediate' },
+    { value: Skill.Level.Advanced, label: 'Advanced' },
+    { value: Skill.Level.Expert, label: 'Expert' },
   ];
 
   visibilityOptions = [
-    { value: VISIBILITY.PUBLIC, label: 'Public' },
-    { value: VISIBILITY.PRIVATE, label: 'Private' }
+    { value: Visibility.Public, label: 'Public' },
+    { value: Visibility.Private, label: 'Private' },
   ];
 
   timelineEntryTypes = [
-    { value: TIMELINE_ENTRY.type.JOB, label: 'Job' },
-    { value: TIMELINE_ENTRY.type.EDUCATION, label: 'Education' }
+    { value: TimelineEntry.Type.Job, label: 'Job' },
+    { value: TimelineEntry.Type.Education, label: 'Education' },
   ];
 
   constructor() {
@@ -159,7 +194,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       description: ['', Validators.maxLength(500)],
       yearsOfExperience: [null, [Validators.min(0), Validators.max(99)]],
       documentation: [''],
-      visibility: [VISIBILITY.PUBLIC, Validators.required]
+      visibility: [Visibility.Public, Validators.required],
     });
 
     this.timelineForm = this.fb.group({
@@ -171,7 +206,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       startDate: [null, Validators.required],
       endDate: [null],
       documentation: [''],
-      visibility: [VISIBILITY.PUBLIC, Validators.required]
+      visibility: [Visibility.Public, Validators.required],
     });
     console.log('SkillForm initialized:', this.skillForm);
     console.log('TimelineForm initialized:', this.timelineForm);
@@ -203,7 +238,9 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Only update if state actually needs to change
     if (this.isCompact !== shouldBeCompact) {
-      console.log(`Scroll: ${shouldBeCompact ? 'COMPACT' : 'EXPANDED'} at ${scrollTop}px`);
+      console.log(
+        `Scroll: ${shouldBeCompact ? 'COMPACT' : 'EXPANDED'} at ${scrollTop}px`
+      );
 
       // Lock transitions
       this.isTransitioning = true;
@@ -227,81 +264,96 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     const userIdString = this.route.snapshot.paramMap.get('userId');
 
     // Determine userId from: input > route params > user object
-    const userId = this.userId ||
-    userIdString && parseInt(userIdString) ||
-    this.user?.id;
+    const userId =
+      this.userId ||
+      (userIdString && parseInt(userIdString)) ||
+      this.inputUser?.id;
 
-    if (!userId && !this.user) {
+    if (!userId && !this.inputUser) {
       this.error = 'User ID is required';
       this.isLoading = false;
       return;
     }
 
     // If user is provided, use it; otherwise fetch from API
-    const userObservable = this.user ? of(this.user) : this.userService.getUserById(userId!);
+    const userObservable = this.inputUser
+      ? of(this.inputUser)
+      : this.userService.getUserById(userId!);
 
     // Always fetch skills and timeline data
     const dataObservables = userObservable.pipe(
-      switchMap(user => {
+      switchMap((user) => {
         if (!user) {
           throw new Error('User not found');
         }
 
-        this.currentUser = user;
+        this.user = user;
         const effectiveUserId = userId || user.id;
 
         return forkJoin({
           user: of(user),
           skills: this.skillsService.getUserSkills(effectiveUserId),
-          timeline: this.timelineService.getUserTimelineEntries(effectiveUserId)
+          timeline:
+            this.timelineService.getUserTimelineEntries(effectiveUserId),
         });
       })
     );
 
-    dataObservables.pipe(
-      catchError(error => {
-        this.error = 'Failed to load user data';
-        console.error('Error loading user data:', error);
-        return of({ user: null, skills: [], timeline: [] });
-      }),
-      finalize(() => this.isLoading = false)
-    ).subscribe(({ user, skills, timeline }) => {
-      this.currentUser = user;
-      this.userSkills = skills;
-      this.timelineEntries = timeline;
+    dataObservables
+      .pipe(
+        catchError((error) => {
+          this.error = 'Failed to load user data';
+          console.error('Error loading user data:', error);
+          return of({ user: null, skills: [], timeline: [] });
+        }),
+        finalize(() => (this.isLoading = false))
+      )
+      .subscribe(({ user, skills, timeline }) => {
+        this.user = user;
+        this.userSkills = skills;
+        this.timelineEntries = timeline;
 
-      this.categorizeSkills();
-      this.categorizeTimelineEntries();
-    });
+        this.categorizeSkills();
+        this.categorizeTimelineEntries();
+      });
   }
 
   private categorizeSkills() {
-    this.technicalSkills = this.userSkills.filter(skill =>
-      skill.category?.toLowerCase().includes('technical') ||
-      skill.category?.toLowerCase().includes('programming') ||
-      skill.category?.toLowerCase().includes('software') ||
-      skill.category?.toLowerCase().includes('technology')
+    this.technicalSkills = this.userSkills.filter(
+      (skill) =>
+        skill.category?.toLowerCase().includes('technical') ||
+        skill.category?.toLowerCase().includes('programming') ||
+        skill.category?.toLowerCase().includes('software') ||
+        skill.category?.toLowerCase().includes('technology')
     );
 
-    this.languageSkills = this.userSkills.filter(skill =>
-      skill.category?.toLowerCase().includes('language') ||
-      skill.category?.toLowerCase().includes('linguistic')
+    this.languageSkills = this.userSkills.filter(
+      (skill) =>
+        skill.category?.toLowerCase().includes('language') ||
+        skill.category?.toLowerCase().includes('linguistic')
     );
 
-    this.otherSkills = this.userSkills.filter(skill =>
-      !this.technicalSkills.includes(skill) &&
-      !this.languageSkills.includes(skill)
+    this.otherSkills = this.userSkills.filter(
+      (skill) =>
+        !this.technicalSkills.includes(skill) &&
+        !this.languageSkills.includes(skill)
     );
   }
 
   private categorizeTimelineEntries() {
     this.jobEntries = this.timelineEntries
-      .filter(entry => entry.timelineEntryType?.toLowerCase() === 'job')
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+      .filter((entry) => entry.timelineEntryType?.toLowerCase() === 'job')
+      .sort(
+        (a, b) =>
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+      );
 
     this.educationEntries = this.timelineEntries
-      .filter(entry => entry.timelineEntryType?.toLowerCase() === 'education')
-      .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+      .filter((entry) => entry.timelineEntryType?.toLowerCase() === 'education')
+      .sort(
+        (a, b) =>
+          new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+      );
   }
 
   // Skill CRUD operations
@@ -314,7 +366,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       level: '',
       description: '',
       yearsOfExperience: null,
-      visibility: VISIBILITY.PUBLIC
+      visibility: Visibility.Public,
     });
     this.showSkillForm = true;
     console.log('showSkillForm set to:', this.showSkillForm); // Debug log
@@ -328,7 +380,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       level: skill.level,
       description: skill.description || '',
       yearsOfExperience: skill.yearsOfExperience || null,
-      visibility: skill.visibility
+      visibility: skill.visibility,
     });
     this.showSkillForm = true;
   }
@@ -340,7 +392,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onSubmitSkill() {
-    if (this.skillForm.invalid || !this.currentUser) {
+    if (this.skillForm.invalid || !this.user) {
       this.markFormGroupTouched(this.skillForm);
       return;
     }
@@ -353,25 +405,32 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     formData.append('category', formValue.category);
     formData.append('level', formValue.level);
     formData.append('description', formValue.description || '');
-    formData.append('yearsOfExperience', formValue.yearsOfExperience?.toString() || '');
+    formData.append(
+      'yearsOfExperience',
+      formValue.yearsOfExperience?.toString() || ''
+    );
     formData.append('visibility', formValue.visibility);
 
-    if (formValue.documentation){
+    if (formValue.documentation) {
       formData.append('documentation', formValue.documentation);
     }
 
     const operation = this.editingSkillId
-      ? this.skillsService.updateSkill(this.currentUser.id, this.editingSkillId, formData)
-      : this.skillsService.createSkill(this.currentUser.id, formData);
+      ? this.skillsService.updateSkill(
+          this.user.id,
+          this.editingSkillId,
+          formData
+        )
+      : this.skillsService.createSkill(this.user.id, formData);
 
-    operation.pipe(
-      finalize(() => this.isSubmittingSkill = false)
-    ).subscribe({
+    operation.pipe(finalize(() => (this.isSubmittingSkill = false))).subscribe({
       next: (result) => {
-        const message = this.editingSkillId ? 'Skill updated successfully' : 'Skill added successfully';
+        const message = this.editingSkillId
+          ? 'Skill updated successfully'
+          : 'Skill added successfully';
         this.snackBar.open(message, 'Close', {
           duration: 3000,
-          panelClass: ['success-snackbar']
+          panelClass: ['success-snackbar'],
         });
 
         this.onCancelSkillForm();
@@ -381,14 +440,14 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         console.error('Error saving skill:', error);
         this.snackBar.open('Error saving skill. Please try again.', 'Close', {
           duration: 5000,
-          panelClass: ['error-snackbar']
+          panelClass: ['error-snackbar'],
         });
-      }
+      },
     });
   }
 
   onDeleteSkill(skill: UserSkill) {
-    if (!this.currentUser) return;
+    if (!this.user) return;
 
     const dialogRef = this.dialog.open(ConfirmDeleteDialogComponent, {
       width: '400px',
@@ -396,27 +455,31 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         title: 'Delete Skill',
         message: `Are you sure you want to delete "${skill.name}"? This action cannot be undone.`,
         confirmText: 'Delete',
-        cancelText: 'Cancel'
-      }
+        cancelText: 'Cancel',
+      },
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result && this.currentUser) {
-        this.skillsService.deleteSkill(this.currentUser.id, skill.id).subscribe({
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && this.user) {
+        this.skillsService.deleteSkill(this.user.id, skill.id).subscribe({
           next: () => {
             this.snackBar.open('Skill deleted successfully', 'Close', {
               duration: 3000,
-              panelClass: ['success-snackbar']
+              panelClass: ['success-snackbar'],
             });
             this.refreshSkills();
           },
           error: (error) => {
             console.error('Error deleting skill:', error);
-            this.snackBar.open('Error deleting skill. Please try again.', 'Close', {
-              duration: 5000,
-              panelClass: ['error-snackbar']
-            });
-          }
+            this.snackBar.open(
+              'Error deleting skill. Please try again.',
+              'Close',
+              {
+                duration: 5000,
+                panelClass: ['error-snackbar'],
+              }
+            );
+          },
         });
       }
     });
@@ -433,7 +496,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       description: '',
       startDate: null,
       endDate: null,
-      visibility: VISIBILITY.PUBLIC
+      visibility: Visibility.Public,
     });
     this.showTimelineForm = true;
   }
@@ -448,7 +511,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       description: entry.description || '',
       startDate: entry.startDate,
       endDate: entry.endDate,
-      visibility: entry.visibility
+      visibility: entry.visibility,
     });
     this.showTimelineForm = true;
   }
@@ -460,7 +523,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onSubmitTimeline() {
-    if (this.timelineForm.invalid || !this.currentUser) {
+    if (this.timelineForm.invalid || !this.user) {
       this.markFormGroupTouched(this.timelineForm);
       return;
     }
@@ -475,7 +538,10 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     formData.append('timelineEntryType', formValue.timelineEntryType);
     formData.append('description', formValue.description || '');
     formData.append('startDate', formValue.startDate.toISOString());
-    formData.append('endDate', formValue.endDate ? formValue.endDate.toISOString() : '');
+    formData.append(
+      'endDate',
+      formValue.endDate ? formValue.endDate.toISOString() : ''
+    );
     formData.append('visibility', formValue.visibility);
 
     if (formValue.documentation) {
@@ -483,38 +549,51 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const operation = this.editingTimelineId
-      ? this.timelineService.updateTimelineEntry(this.currentUser.id, this.editingTimelineId, formData)
-      : this.timelineService.createTimelineEntry(this.currentUser.id, formData);
+      ? this.timelineService.updateTimelineEntry(
+          this.user.id,
+          this.editingTimelineId,
+          formData
+        )
+      : this.timelineService.createTimelineEntry(this.user.id, formData);
 
-    operation.pipe(
-      finalize(() => this.isSubmittingTimeline = false)
-    ).subscribe({
-      next: (result) => {
-        const message = this.editingTimelineId ? 'Timeline entry updated successfully' : 'Timeline entry added successfully';
-        this.snackBar.open(message, 'Close', {
-          duration: 3000,
-          panelClass: ['success-snackbar']
-        });
-
-        this.onCancelTimelineForm();
-        this.refreshTimelineEntries();
-      },
-      error: (error) => {
-        console.error('Error saving timeline entry:', error);
-        if (error.originalError?.error?.non_field_errors) {
-          this.snackBar.open(error.originalError.error.non_field_errors[0], 'Close');
-        } else {
-          this.snackBar.open('Unexpected error saving timeline entry. Please try again.', 'Close', {
-            duration: 5000,
-            panelClass: ['error-snackbar']
+    operation
+      .pipe(finalize(() => (this.isSubmittingTimeline = false)))
+      .subscribe({
+        next: (result) => {
+          const message = this.editingTimelineId
+            ? 'Timeline entry updated successfully'
+            : 'Timeline entry added successfully';
+          this.snackBar.open(message, 'Close', {
+            duration: 3000,
+            panelClass: ['success-snackbar'],
           });
-        }
-      }
-    });
+
+          this.onCancelTimelineForm();
+          this.refreshTimelineEntries();
+        },
+        error: (error) => {
+          console.error('Error saving timeline entry:', error);
+          if (error.originalError?.error?.non_field_errors) {
+            this.snackBar.open(
+              error.originalError.error.non_field_errors[0],
+              'Close'
+            );
+          } else {
+            this.snackBar.open(
+              'Unexpected error saving timeline entry. Please try again.',
+              'Close',
+              {
+                duration: 5000,
+                panelClass: ['error-snackbar'],
+              }
+            );
+          }
+        },
+      });
   }
 
   onDeleteTimelineEntry(entry: UserTimelineEntry) {
-    if (!this.currentUser) return;
+    if (!this.user) return;
 
     const dialogRef = this.dialog.open(ConfirmDeleteDialogComponent, {
       width: '400px',
@@ -522,36 +601,46 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         title: 'Delete Timeline Entry',
         message: `Are you sure you want to delete "${entry.title}"? This action cannot be undone.`,
         confirmText: 'Delete',
-        cancelText: 'Cancel'
-      }
+        cancelText: 'Cancel',
+      },
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result && this.currentUser) {
-        this.timelineService.deleteTimelineEntry(this.currentUser.id, entry.id).subscribe({
-          next: () => {
-            this.snackBar.open('Timeline entry deleted successfully', 'Close', {
-              duration: 3000,
-              panelClass: ['success-snackbar']
-            });
-            this.refreshTimelineEntries();
-          },
-          error: (error) => {
-            console.error('Error deleting timeline entry:', error);
-            this.snackBar.open('Error deleting timeline entry. Please try again.', 'Close', {
-              duration: 5000,
-              panelClass: ['error-snackbar']
-            });
-          }
-        });
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && this.user) {
+        this.timelineService
+          .deleteTimelineEntry(this.user.id, entry.id)
+          .subscribe({
+            next: () => {
+              this.snackBar.open(
+                'Timeline entry deleted successfully',
+                'Close',
+                {
+                  duration: 3000,
+                  panelClass: ['success-snackbar'],
+                }
+              );
+              this.refreshTimelineEntries();
+            },
+            error: (error) => {
+              console.error('Error deleting timeline entry:', error);
+              this.snackBar.open(
+                'Error deleting timeline entry. Please try again.',
+                'Close',
+                {
+                  duration: 5000,
+                  panelClass: ['error-snackbar'],
+                }
+              );
+            },
+          });
       }
     });
   }
 
   private refreshSkills() {
-    if (!this.currentUser) return;
+    if (!this.user) return;
 
-    const userId = this.userId || this.currentUser.id;
+    const userId = this.userId || this.user.id;
     this.skillsService.getUserSkills(userId).subscribe({
       next: (skills) => {
         this.userSkills = skills;
@@ -559,14 +648,14 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (error) => {
         console.error('Error refreshing skills:', error);
-      }
+      },
     });
   }
 
   private refreshTimelineEntries() {
-    if (!this.currentUser) return;
+    if (!this.user) return;
 
-    const userId = this.userId || this.currentUser.id;
+    const userId = this.userId || this.user.id;
     this.timelineService.getUserTimelineEntries(userId).subscribe({
       next: (entries) => {
         this.timelineEntries = entries;
@@ -574,18 +663,21 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (error) => {
         console.error('Error refreshing timeline entries:', error);
-      }
+      },
     });
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {
-    Object.keys(formGroup.controls).forEach(key => {
+    Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsTouched();
     });
   }
 
-  getFieldErrorMessage(fieldName: string, formType: 'skill' | 'timeline' = 'skill'): string {
+  getFieldErrorMessage(
+    fieldName: string,
+    formType: 'skill' | 'timeline' = 'skill'
+  ): string {
     const form = formType === 'skill' ? this.skillForm : this.timelineForm;
     const control = form.get(fieldName);
     if (!control || !control.errors || !control.touched) {
@@ -597,59 +689,56 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       return `${Utilities.getFormFieldDisplayNames(fieldName)} is required`;
     }
     if (errors['maxlength']) {
-      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot exceed ${errors['maxlength'].requiredLength} characters`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot exceed ${
+        errors['maxlength'].requiredLength
+      } characters`;
     }
     if (errors['min']) {
-      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot be less than ${errors['min'].min}`;
+      return `${Utilities.getFormFieldDisplayNames(
+        fieldName
+      )} cannot be less than ${errors['min'].min}`;
     }
     if (errors['max']) {
-      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot exceed ${errors['max'].max}`;
+      return `${Utilities.getFormFieldDisplayNames(fieldName)} cannot exceed ${
+        errors['max'].max
+      }`;
     }
     return 'Invalid value';
   }
 
-  getInitials(): string {
-    if (!this.currentUser) return '';
-    return `${this.currentUser.firstName?.charAt(0).toUpperCase() || ''}${this.currentUser.lastName?.charAt(0).toUpperCase() || ''}`;
-  }
-
   getFullName(): string {
-    if (!this.currentUser) return '';
-    return `${this.currentUser.firstName || ''} ${this.currentUser.lastName || ''}`.trim();
+    if (!this.user) return '';
+    return `${this.user.firstName || ''} ${this.user.lastName || ''}`.trim();
   }
 
   getStatusColor(status: string): string {
     switch (status?.toLowerCase()) {
-      case 'active': return 'primary';
-      case 'pending': return 'accent';
-      case 'inactive': return 'warn';
-      default: return '';
-    }
-  }
-
-  getSkillLevelColor(level: string): string {
-    switch (level?.toLowerCase()) {
-      case 'expert': return 'primary';
-      case 'advanced': return 'accent';
-      case 'intermediate': return 'basic';
-      case 'beginner': return 'warn';
-      default: return '';
+      case 'active':
+        return 'primary';
+      case 'pending':
+        return 'accent';
+      case 'inactive':
+        return 'warn';
+      default:
+        return '';
     }
   }
 
   formatDateRange(startDate: Date, endDate?: Date): string {
-    const start = new Date(startDate).toLocaleDateString('en-US', { //todo probably change to other locale
+    const start = new Date(startDate).toLocaleDateString('en-US', {
+      //todo probably change to other locale
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
 
     if (!endDate) {
       return `${start} - Present`;
     }
 
-    const end = new Date(endDate).toLocaleDateString('en-US', { //todo probably change to other locale
+    const end = new Date(endDate).toLocaleDateString('en-US', {
+      //todo probably change to other locale
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
 
     return `${start} - ${end}`;
@@ -673,7 +762,9 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       return `${years} year${years !== 1 ? 's' : ''}`;
     }
 
-    return `${years} year${years !== 1 ? 's' : ''} ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+    return `${years} year${years !== 1 ? 's' : ''} ${remainingMonths} month${
+      remainingMonths !== 1 ? 's' : ''
+    }`;
   }
 
   getRelativeTime(date: Date): string {
@@ -690,8 +781,29 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onEditUser() {
-    // Emit event or navigate to edit page
-    console.log('Edit user:', this.currentUser);
+    if (this.user) {
+      this.editUser.emit(this.user);
+
+      const dialogRef = this.dialog.open(GenericDialogComponent, {
+        data: {
+          title: 'Edit User',
+          component: EditUserComponent,
+          componentInputs: { user: this.user },
+        },
+        width: '95vw',
+        maxWidth: '1200px',
+        height: '90vh',
+        maxHeight: '800px',
+        panelClass: 'user-detail-dialog',
+        autoFocus: false,
+        restoreFocus: false,
+      });
+
+      dialogRef.afterClosed().subscribe((result) => {
+        // Reload user data after editing
+        this.loadUserData();
+      });
+    }
   }
 
   openExternalLink(url: string | undefined | null) {

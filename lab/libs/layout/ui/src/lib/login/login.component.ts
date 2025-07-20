@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { RaisedSpinnerButtonComponent } from '@lab/shared-ui';
 
 @Component({
   selector: 'lib-layout-login',
@@ -27,6 +28,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatIconModule,
     MatCheckboxModule,
     MatProgressSpinnerModule,
+    RaisedSpinnerButtonComponent,
   ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
@@ -48,7 +50,7 @@ export class LoginComponent implements OnInit {
    * Flag if password should be hidden (is handled in UI)
    * @default true
    */
-  hidePassword= true;
+  hidePassword = true;
 
   /**
    * Flag handling display of loading animation
@@ -87,10 +89,10 @@ export class LoginComponent implements OnInit {
    * event handler for when login button is pressed. validates input and calls API
    */
   onLogin() {
-    this.isLoading = true;
 
     if (this.loginForm.valid) {
       const { email, password } = this.loginForm.value;
+      this.isLoading = true;
       this.authService.login(email, password).subscribe({
         next: () => {
           this.snackBar.open('Login successful', 'Close', {
@@ -117,7 +119,7 @@ export class LoginComponent implements OnInit {
     Object.keys(this.loginForm.controls).forEach((key) => {
       const control = this.loginForm.get(key);
       control?.markAsTouched();
-    })
+    });
   }
 
   /**
@@ -128,7 +130,9 @@ export class LoginComponent implements OnInit {
     if (emailControl?.hasError('required')) {
       return 'Email is required';
     }
-    return emailControl?.hasError('email') ? 'Please enter a valid email address' : '';
+    return emailControl?.hasError('email')
+      ? 'Please enter a valid email address'
+      : '';
   }
 
   /**
@@ -139,6 +143,8 @@ export class LoginComponent implements OnInit {
     if (passwordControl?.hasError('required')) {
       return 'Password is required';
     }
-    return passwordControl?.hasError('minlength') ? 'Password must be at least 6 characters' : '';
+    return passwordControl?.hasError('minlength')
+      ? 'Password must be at least 6 characters'
+      : '';
   }
 }

@@ -1,18 +1,11 @@
 <mat-card class="user-card" [class.inactive]="user.status === 'inactive'">
   <mat-card-header>
     <!-- Avatar -->
-    <div mat-card-avatar class="user-avatar">
-      <img *ngIf="user.avatar"
-           [src]="user.avatar"
-           [alt]="user"
-           class="avatar-image">
-      <div *ngIf="!user.avatar"
-           class="avatar-fallback"
-           [class]="'avatar-' + user.status">
-        {{ this.getInitials() }}
-      </div>
-    </div>
-
+    <lib-shared-ui-avatar
+      mat-card-avatar
+      [user]="user"
+      [size]="AvatarSize.Small"
+    ></lib-shared-ui-avatar>
     <!-- User Info -->
     <mat-card-title class="user-name">
       <a href="u/{{ user.id}}/">{{ this.getFullName() }}</a>
@@ -95,7 +88,7 @@
       <mat-icon>visibility</mat-icon>
       View
     </button>
-    <button mat-button (click)="onEdit()">
+    <button *ngIf="canEditUser(user.id)" mat-button (click)="onEdit()">
       <mat-icon>edit</mat-icon>
       Edit
     </button>

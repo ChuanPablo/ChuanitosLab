@@ -1,49 +1,41 @@
-<div class="user-detail-container" *ngIf="!isLoading && currentUser">
+<div class="user-detail-container" *ngIf="!isLoading && user">
   <!-- Sticky Top Banner -->
   <div class="sticky-banner-container">
     <mat-card class="user-banner" [class.compact]="isCompact">
       <div class="banner-content">
         <!-- Avatar Section -->
         <div class="avatar-section">
-          <div class="user-avatar-large" [class.compact]="isCompact">
-            <img *ngIf="currentUser.avatar"
-                 [src]="currentUser.avatar"
-                 [alt]="getFullName()"
-                 class="avatar-image">
-            <div *ngIf="!currentUser.avatar"
-                 class="avatar-fallback large"
-                 [class]="'avatar-' + currentUser.status"
-                 [class.compact]="isCompact">
-              {{ getInitials() }}
-            </div>
-          </div>
+          <lib-shared-ui-avatar
+            [user]="user"
+            [size]="isCompact ? AvatarSize.Compact : AvatarSize.Normal"
+          ></lib-shared-ui-avatar>
         </div>
 
         <!-- User Info Section -->
         <div class="user-info-section">
           <div class="user-basic-info">
-            <a href="u/{{ currentUser.id}}/">
+            <a href="u/{{ user.id}}/">
               <h1 class="user-name" [class.compact]="isCompact">{{ getFullName() }}</h1>
             </a>
-            <p class="user-email" [class.compact]="isCompact" [class.hidden]="isCompact">{{ currentUser.email }}</p>
-            <p class="user-username" [class.compact]="isCompact" [class.hidden]="isCompact">&commat;{{ currentUser.username }}</p>
+            <p class="user-email" [class.compact]="isCompact" [class.hidden]="isCompact">{{ user.email }}</p>
+            <p class="user-username" [class.compact]="isCompact" [class.hidden]="isCompact">&commat;{{ user.username }}</p>
           </div>
 
           <!-- Status and Metadata -->
           <div class="user-metadata" [class.compact]="isCompact">
             <mat-chip-set>
-              <mat-chip [color]="getStatusColor(currentUser.status)" selected [class.compact]="isCompact">
+              <mat-chip [color]="getStatusColor(user.status)" selected [class.compact]="isCompact">
                 <mat-icon matChipAvatar *ngIf="!isCompact">
-                  {{ currentUser.status === 'active' ? 'check_circle' :
-                  currentUser.status === 'inactive' ? 'block' : 'schedule' }}
+                  {{ user.status === 'active' ? 'check_circle' :
+                  user.status === 'inactive' ? 'block' : 'schedule' }}
                 </mat-icon>
-                {{ currentUser.status | titlecase }}
+                {{ user.status | titlecase }}
               </mat-chip>
-              <mat-chip *ngIf="currentUser.isStaff && !isCompact" color="accent" selected>
+              <mat-chip *ngIf="user.isStaff && !isCompact" color="accent" selected>
                 <mat-icon matChipAvatar>admin_panel_settings</mat-icon>
                 Staff
               </mat-chip>
-              <mat-chip *ngIf="currentUser.isSuperuser && !isCompact" color="warn" selected>
+              <mat-chip *ngIf="user.isSuperuser && !isCompact" color="warn" selected>
                 <mat-icon matChipAvatar>supervisor_account</mat-icon>
                 Admin
               </mat-chip>
@@ -52,39 +44,39 @@
 
           <!-- Activity Info - Hidden in compact mode -->
           <div class="activity-metadata" [class.hidden]="isCompact">
-            <div class="activity-item" *ngIf="currentUser.lastActive">
+            <div class="activity-item" *ngIf="user.lastActive">
               <mat-icon>schedule</mat-icon>
-              <span>Last active {{ getRelativeTime(currentUser.lastActive) }}</span>
+              <span>Last active {{ getRelativeTime(user.lastActive) }}</span>
             </div>
             <div class="activity-item">
               <mat-icon>calendar_today</mat-icon>
-              <span>Joined {{ getRelativeTime(currentUser.joinDate) }}</span>
+              <span>Joined {{ getRelativeTime(user.joinDate) }}</span>
             </div>
           </div>
         </div>
 
         <!-- Social Links Section - Hidden in compact mode -->
-        <div class="social-links-section" [class.hidden]="isCompact" *ngIf="currentUser.linkedinLink || currentUser.githubLink || currentUser.dockerhubLink">
+        <div class="social-links-section" [class.hidden]="isCompact" *ngIf="user.linkedinLink || user.githubLink || user.dockerhubLink">
           <div class="social-links">
-            <button *ngIf="currentUser.linkedinLink"
+            <button *ngIf="user.linkedinLink"
                     mat-icon-button
                     color="primary"
                     matTooltip="LinkedIn Profile"
-                    (click)="openExternalLink(currentUser!.linkedinLink)">
+                    (click)="openExternalLink(user!.linkedinLink)">
               <mat-icon>business</mat-icon>
             </button>
-            <button *ngIf="currentUser.githubLink"
+            <button *ngIf="user.githubLink"
                     mat-icon-button
                     color="accent"
                     matTooltip="GitHub Profile"
-                    (click)="openExternalLink(currentUser!.githubLink)">
+                    (click)="openExternalLink(user!.githubLink)">
               <mat-icon>code</mat-icon>
             </button>
-            <button *ngIf="currentUser.dockerhubLink"
+            <button *ngIf="user.dockerhubLink"
                     mat-icon-button
                     color="primary"
                     matTooltip="DockerHub Profile"
-                    (click)="openExternalLink(currentUser!.dockerhubLink)">
+                    (click)="openExternalLink(user!.dockerhubLink)">
               <mat-icon>cloud</mat-icon>
             </button>
           </div>
@@ -92,7 +84,7 @@
 
         <!-- Actions Section -->
         <div class="actions-section">
-          <button mat-raised-button color="primary" (click)="onEditUser()" [class.compact]="isCompact">
+          <button *ngIf="canEditUser(user.id)" mat-raised-button color="primary" (click)="onEditUser()" [class.compact]="isCompact">
             <mat-icon>edit</mat-icon>
             <span [class.hidden]="isCompact">Edit Profile</span>
           </button>
@@ -117,7 +109,7 @@
               </mat-chip>
             </mat-card-title>
             <div class="header-actions">
-              <button mat-icon-button
+              <button *ngIf="canEditUser(user.id)" mat-icon-button
                       (click)="onAddSkill()"
                       matTooltip="Add Skill"
                       [disabled]="showSkillForm"
@@ -204,11 +196,13 @@
                   <button type="button" mat-button (click)="onCancelSkillForm()" [disabled]="isSubmittingSkill">
                     Cancel
                   </button>
-                  <button type="submit" mat-raised-button color="primary" [disabled]="isSubmittingSkill || skillForm.invalid">
-                    <mat-spinner diameter="20" *ngIf="isSubmittingSkill"></mat-spinner>
-                    <span *ngIf="!isSubmittingSkill">{{ editingSkillId ? 'Update' : 'Add' }} Skill</span>
-                    <span *ngIf="isSubmittingSkill">{{ editingSkillId ? 'Updating' : 'Adding' }}...</span>
-                  </button>
+                  <lib-shared-ui-raised-spinner-button type="submit"
+                                                       [isLoading]="isSubmittingSkill"
+                                                       [disabled]="skillForm.invalid">
+                    <span>{{ editingTimelineId ? 'Update' : 'Add' }} Entry</span>
+                    <span loading>{{ editingTimelineId ? 'Updating' : 'Adding' }}...</span>
+                  </lib-shared-ui-raised-spinner-button>
+                  <span class="error-message" *ngIf="errorMessage">{{ errorMessage }}</span>
                 </div>
               </form>
             </div>
@@ -227,30 +221,13 @@
 
               <div class="skills-list">
                 <div *ngFor="let skill of technicalSkills; let i = index" class="skill-item">
-                  <!-- Show normal skill chip with edit/delete buttons -->
-                  <div class="skill-chip-container">
-                    <mat-chip [color]="getSkillLevelColor(skill.level)"
-                              [matTooltip]="skill.description || skill.levelDisplay">
-                      <span class="skill-name">{{ skill.name }}</span>
-                      <mat-icon *ngIf="skill.yearsOfExperience" matChipTrailingIcon>
-                        access_time
-                      </mat-icon>
-                    </mat-chip>
-                    <div class="skill-details" *ngIf="skill.yearsOfExperience || skill.levelDisplay">
-                      <span *ngIf="skill.levelDisplay" class="skill-level">{{ skill.levelDisplay }}</span>
-                      <span *ngIf="skill.yearsOfExperience" class="skill-experience">
-                        {{ skill.yearsOfExperience }} years
-                      </span>
-                    </div>
-                    <div class="skill-actions">
-                      <button mat-icon-button [matMenuTriggerFor]="skillActionsMenu"
-                              (menuOpened)="setSelectedSkill(skill)"
-                              matTooltip="More options"
-                              class="skill-action-btn">
-                        <mat-icon>more_vert</mat-icon>
-                      </button>
-                    </div>
-                  </div>
+                  <!-- Show normal skill card with edit/delete buttons -->
+                  <lib-users-ui-user-skill-chip
+                    [skill]="skill"
+                    (editSkill)="onEditSkill($event)"
+                    (deleteSkill)="onDeleteSkill($event)"
+                    (menuOpened)="setSelectedSkill($event)">
+                  </lib-users-ui-user-skill-chip>
                 </div>
               </div>
             </mat-expansion-panel>
@@ -270,26 +247,12 @@
               <div class="skills-list">
                 <div *ngFor="let skill of languageSkills; let i = index" class="skill-item">
                   <!-- Show normal skill chip with edit/delete buttons -->
-                  <div class="skill-chip-container">
-                    <mat-chip [color]="getSkillLevelColor(skill.level)"
-                              [matTooltip]="skill.description || skill.levelDisplay">
-                      <span class="skill-name">{{ skill.name }}</span>
-                    </mat-chip>
-                    <div class="skill-details" *ngIf="skill.yearsOfExperience || skill.levelDisplay">
-                      <span *ngIf="skill.levelDisplay" class="skill-level">{{ skill.levelDisplay }}</span>
-                      <span *ngIf="skill.yearsOfExperience" class="skill-experience">
-                        {{ skill.yearsOfExperience }} years
-                      </span>
-                    </div>
-                    <div class="skill-actions">
-                      <button mat-icon-button [matMenuTriggerFor]="skillActionsMenu"
-                              (menuOpened)="setSelectedSkill(skill)"
-                              matTooltip="More options"
-                              class="skill-action-btn">
-                        <mat-icon>more_vert</mat-icon>
-                      </button>
-                    </div>
-                  </div>
+                  <lib-users-ui-user-skill-chip
+                    [skill]="skill"
+                    (editSkill)="onEditSkill($event)"
+                    (deleteSkill)="onDeleteSkill($event)"
+                    (menuOpened)="setSelectedSkill($event)">
+                  </lib-users-ui-user-skill-chip>
                 </div>
               </div>
             </mat-expansion-panel>
@@ -310,24 +273,12 @@
                 <div *ngFor="let skill of otherSkills; let i = index" class="skill-item">
                   <!-- Show normal skill chip with edit/delete buttons -->
                   <div class="skill-chip-container">
-                    <mat-chip [color]="getSkillLevelColor(skill.level)"
-                              [matTooltip]="skill.description || skill.levelDisplay">
-                      <span class="skill-name">{{ skill.name }}</span>
-                    </mat-chip>
-                    <div class="skill-details" *ngIf="skill.yearsOfExperience || skill.levelDisplay">
-                      <span *ngIf="skill.levelDisplay" class="skill-level">{{ skill.levelDisplay }}</span>
-                      <span *ngIf="skill.yearsOfExperience" class="skill-experience">
-                        {{ skill.yearsOfExperience }} years
-                      </span>
-                    </div>
-                    <div class="skill-actions">
-                      <button mat-icon-button [matMenuTriggerFor]="skillActionsMenu"
-                              (menuOpened)="setSelectedSkill(skill)"
-                              matTooltip="More options"
-                              class="skill-action-btn">
-                        <mat-icon>more_vert</mat-icon>
-                      </button>
-                    </div>
+                    <lib-users-ui-user-skill-chip
+                      [skill]="skill"
+                      (editSkill)="onEditSkill($event)"
+                      (deleteSkill)="onDeleteSkill($event)"
+                      (menuOpened)="setSelectedSkill($event)">
+                    </lib-users-ui-user-skill-chip>
                   </div>
                 </div>
               </div>
@@ -337,7 +288,7 @@
             <div *ngIf="userSkills.length === 0" class="empty-state">
               <mat-icon>psychology_alt</mat-icon>
               <p>No skills added yet</p>
-              <button mat-raised-button color="primary" (click)="onAddSkill()">
+              <button *ngIf="canEditUser(user.id)" mat-raised-button color="primary" (click)="onAddSkill()">
                 Add First Skill
               </button>
             </div>
@@ -370,6 +321,7 @@
             </mat-card-title>
             <div class="header-actions">
               <button mat-icon-button
+                      *ngIf="canEditUser(user.id)"
                       (click)="onAddTimelineEntry()"
                       matTooltip="Add Timeline Entry"
                       [disabled]="showTimelineForm"
@@ -470,11 +422,12 @@
                   <button type="button" mat-button (click)="onCancelTimelineForm()" [disabled]="isSubmittingTimeline">
                     Cancel
                   </button>
-                  <button type="submit" mat-raised-button color="primary" [disabled]="isSubmittingTimeline || timelineForm.invalid">
-                    <mat-spinner diameter="20" *ngIf="isSubmittingTimeline"></mat-spinner>
-                    <span *ngIf="!isSubmittingTimeline">{{ editingTimelineId ? 'Update' : 'Add' }} Entry</span>
-                    <span *ngIf="isSubmittingTimeline">{{ editingTimelineId ? 'Updating' : 'Adding' }}...</span>
-                  </button>
+                  <lib-shared-ui-raised-spinner-button type="submit"
+                                                       [isLoading]="isSubmittingTimeline"
+                                                       [disabled]="timelineForm.invalid">
+                    <span>{{ editingTimelineId ? 'Update' : 'Add' }} Entry</span>
+                    <span loading>{{ editingTimelineId ? 'Updating' : 'Adding' }}...</span>
+                  </lib-shared-ui-raised-spinner-button>
                 </div>
               </form>
             </div>
@@ -489,7 +442,7 @@
                   <div *ngIf="timelineEntries.length === 0" class="empty-state">
                     <mat-icon>timeline</mat-icon>
                     <p>No timeline entries yet</p>
-                    <button mat-raised-button color="primary" (click)="onAddTimelineEntry()">
+                    <button *ngIf="canEditUser(user.id)" mat-raised-button color="primary" (click)="onAddTimelineEntry()">
                       Add First Entry
                     </button>
                   </div>
@@ -518,10 +471,10 @@
                       <p>{{ entry.description }}</p>
                     </div>
                     <div class="timeline-entry-actions">
-                      <button mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
+                      <button *ngIf="canEditUser(user.id)" mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
                         <mat-icon>edit</mat-icon>
                       </button>
-                      <button mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
+                      <button *ngIf="canEditUser(user.id)" mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
                         <mat-icon>delete</mat-icon>
                       </button>
                     </div>
@@ -626,7 +579,7 @@
     </div>
 
     <!-- Additional Info Card -->
-    <mat-card *ngIf="currentUser.contactInfo || currentUser.additionalInfo" class="additional-info-card">
+    <mat-card *ngIf="user.contactInfo || user.additionalInfo" class="additional-info-card">
       <mat-card-header>
         <mat-card-title>
           <mat-icon>info</mat-icon>
@@ -634,13 +587,13 @@
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div *ngIf="currentUser.contactInfo" class="info-section">
+        <div *ngIf="user.contactInfo" class="info-section">
           <h4>Contact Information</h4>
-          <p>{{ currentUser.contactInfo }}</p>
+          <p>{{ user.contactInfo }}</p>
         </div>
-        <div *ngIf="currentUser.additionalInfo" class="info-section">
+        <div *ngIf="user.additionalInfo" class="info-section">
           <h4>Additional Details</h4>
-          <p>{{ currentUser.additionalInfo }}</p>
+          <p>{{ user.additionalInfo }}</p>
         </div>
       </mat-card-content>
     </mat-card>

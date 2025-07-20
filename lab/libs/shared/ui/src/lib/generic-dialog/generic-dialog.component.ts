@@ -28,7 +28,7 @@ export interface GenericDialogData {
 })
 export class GenericDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild(NgComponentOutlet, { static: false }) componentOutlet!: NgComponentOutlet;
-  private subscription?: Subscription;
+  private subscriptions: Subscription[] = [];
 
   constructor(
     public dialogRef: MatDialogRef<GenericDialogComponent>,
@@ -36,21 +36,31 @@ export class GenericDialogComponent implements AfterViewInit, OnDestroy {
   ) {}
 
   ngAfterViewInit(): void {
-    // Wait for the component to be initialized and check if it has the registrationCompleted event
+    // Wait for the component to be initialized and check for events
     setTimeout(() => {
       const componentRef = this.componentOutlet?.['_componentRef'] as ComponentRef<any>;
-      if (componentRef?.instance?.wizardCompleted) {
-        this.subscription = componentRef.instance.wizardCompleted.subscribe(() => {
-          this.onClose();
-        });
+
+      if (componentRef?.instance) {
+        if (componentRef.instance.wizardCompleted) {
+          const sub = componentRef.instance.wizardCompleted.subscribe(() => {
+            this.onClose();
+          });
+          this.subscriptions.push(sub);
+        }
+
+        // Handle editUser events - forward to parent via dialog result
+        if (componentRef.instance.editUser) {
+          const sub = componentRef.instance.editUser.subscribe((user: any) => {
+            this.dialogRef.close({ action: 'editUser', data: user });
+          });
+          this.subscriptions.push(sub);
+        }
       }
     });
   }
 
   ngOnDestroy(): void {
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   onClose(): void {

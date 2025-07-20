@@ -2,12 +2,6 @@ import { Component, inject, Input, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '@lab/shared-interfaces';
 import { UserService } from '@lab/core-services';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,10 +20,22 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatMenuModule } from '@angular/material/menu';
-import { catchError, finalize, switchMap } from 'rxjs/operators';
-import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AvatarComponent } from '@lab/shared-ui';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 
+/**
+ * @summary Edit user component
+ * @description
+ * This component is used to edit a user
+ */
 @Component({
   selector: 'lib-layout-edit-user',
   imports: [
@@ -52,6 +58,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
     MatDatepickerModule,
     MatNativeDateModule,
     MatMenuModule,
+    AvatarComponent,
   ],
   templateUrl: './edit-user.component.html',
   styleUrl: './edit-user.component.scss',
@@ -67,11 +74,56 @@ export class EditUserComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private snackBar = inject(MatSnackBar);
 
+
   // Globals ----
   isLoading = false;
   isSubmittingUser = false;
   error: string | null = null;
   userForm: FormGroup;
+
+  // misc ----
+  private originalAvatarUrl = '';
+
+  // Actions ----
+
+  /**
+   * @summary 'next' Observable action for 'updateUser'
+   * @param user - updated user (API response)
+   * @param onSuccess - additional callback function executed on success
+   */
+  private postUpdateSuccessAction = (user: User, onSuccess?: () => void) => {
+    this.user = user;
+    onSuccess?.();
+
+    this.loadUserData();
+
+    this.displaySnackbar(this.user.id
+      ? 'User updated successfully'
+      : 'User added successfully');
+  };
+
+  /**
+   * @summary 'error' Observable action for 'updateUser'
+   * @param error - Error object (API response)
+   */
+  private postUpdateErrorAction = (error: Error) => {
+    this.error = error.message;
+    this.displaySnackbar(error.message, false);
+  };
+
+  /**
+   * @summary Get 'next' and 'error' Observable actions for 'updateUser'
+   * @param onSuccess - additional callback function executed on success
+   * @example Example usage with updateUser():
+   *  this.userService.updateUser(this.user!.id, formData)
+   *                          .subscribe(this.getPostUpdateAction( () => this.setOriginalAvatarUrl()));
+   */
+  private getPostUpdateAction(onSuccess?: () => void) {
+    return {
+      next: (user: User) => this.postUpdateSuccessAction(user, onSuccess),
+      error: (error: Error) => this.postUpdateErrorAction(error),
+    }
+  }
 
   // Lifecycle ----
   constructor() {
@@ -91,87 +143,7 @@ export class EditUserComponent implements OnInit {
 
   ngOnInit() {
     this.loadUserData();
-  }
-
-  onSubmitUser() {
-    if (this.userForm.invalid || !this.user) {
-      this.userForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSubmittingUser = true;
-
-    const formValue = this.userForm.value;
-    const formData = new FormData();
-
-    formData.append('email', formValue.email);
-
-    if (formValue.username) {
-      formData.append('username', formValue.username);
-    }
-    if (formValue.firstName) {
-      formData.append('first_name', formValue.firstName);
-    }
-    if (formValue.lastName) {
-      formData.append('last_name', formValue.lastName);
-    }
-    if (formValue.avatar) {
-      formData.append('avatar', formValue.avatar);
-    }
-    if (formValue.linkedinLink) {
-      formData.append('linkedin_link', formValue.linkedinLink);
-    }
-    if (formValue.githubLink) {
-      formData.append('github_link', formValue.githubLink);
-    }
-    if (formValue.dockerhubLink) {
-      formData.append('dockerhub_link', formValue.dockerhubLink);
-    }
-    if (formValue.contactInfo) {
-      formData.append('contact_info', formValue.contactInfo);
-    }
-    if (formValue.additionalInfo) {
-      formData.append('additional_info', formValue.additionalInfo);
-    }
-
-    const operation = this.user.id
-      ? this.userService.updateUser(this.user.id, formData)
-      : this.userService.createUser(formData);
-
-    operation.pipe(
-      finalize(() => this.isSubmittingUser = false)
-    ).subscribe({
-        next: (result) => {
-          this.user = result;
-
-          const message = this.user.id ? 'User updated successfully' : 'User added successfully';
-          this.snackBar.open(message, 'Close', {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          });
-
-          this.onCancelUserForm();
-          this.loadUserData();
-        },
-        error: (error) => {
-          this.error = error.message;
-        }
-      }
-    )
-  }
-
-  onCancelUserForm() {
-    this.userForm.reset();
-  }
-
-  getFieldErrorMessage(fieldName: string) {
-    const fieldControl = this.userForm.get(fieldName);
-    if (fieldControl?.hasError('required')) {
-      return 'Field is required';
-    }
-    return fieldControl?.hasError('minlength')
-      ? 'Field must be at least 2 characters'
-      : '';
+    this.setOriginalAvatarUrl();
   }
 
   private loadUserData() {
@@ -228,5 +200,131 @@ export class EditUserComponent implements OnInit {
       contactInfo: this.user.contactInfo,
       additionalInfo: this.user.additionalInfo,
     });
+  }
+
+  public onFileSelected(file: File) {
+    console.log('File selected', file);
+    this.updateAvatar(file);
+  }
+
+  private setOriginalAvatarUrl() {
+    this.originalAvatarUrl = this.user?.avatar || '';
+  }
+
+  private updateAvatar(file: File) {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    this.userService
+      .updateUser(this.user!.id, formData)
+      .subscribe(this.getPostUpdateAction());
+  }
+
+  public onSubmitUser() {
+    if (this.userForm.invalid || !this.user) {
+      this.userForm.markAllAsTouched();
+      return;
+    }
+
+    this.isSubmittingUser = true;
+
+    const formValue = this.userForm.value;
+    const formData = new FormData();
+
+    formData.append('email', formValue.email);
+
+    if (formValue.username) {
+      formData.append('username', formValue.username);
+    }
+    if (formValue.firstName) {
+      formData.append('first_name', formValue.firstName);
+    }
+    if (formValue.lastName) {
+      formData.append('last_name', formValue.lastName);
+    }
+    if (formValue.avatar) {
+      formData.append('avatar', formValue.avatar);
+    }
+    if (formValue.linkedinLink) {
+      formData.append('linkedin_link', formValue.linkedinLink);
+    }
+    if (formValue.githubLink) {
+      formData.append('github_link', formValue.githubLink);
+    }
+    if (formValue.dockerhubLink) {
+      formData.append('dockerhub_link', formValue.dockerhubLink);
+    }
+    if (formValue.contactInfo) {
+      formData.append('contact_info', formValue.contactInfo);
+    }
+    if (formValue.additionalInfo) {
+      formData.append('additional_info', formValue.additionalInfo);
+    }
+
+    const operation = this.user.id
+      ? this.userService.updateUser(this.user.id, formData)
+      : this.userService.createUser(formData);
+
+    operation.pipe(finalize(() => (this.isSubmittingUser = false))).subscribe(
+      this.getPostUpdateAction(() => {
+        this.onCancelUserForm();
+        // update this.originalAvatarUrl in case user presses cancel AFTER confirming a new avatar
+        this.setOriginalAvatarUrl();
+      })
+    );
+  }
+
+  public onCancelUserForm(fullReset = false) {
+    this.userForm.reset();
+    if (fullReset) {
+      this.resetAvatar();
+    }
+  }
+
+  private resetAvatar() {
+    const formData = new FormData();
+    formData.append('avatar', this.originalAvatarUrl);
+    this.userService.updateUser(this.user!.id, formData).subscribe(this.getPostUpdateAction());
+  }
+
+  private displaySnackbar(message: string, success = true) {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      panelClass: [`${success ? 'success' : 'error'}-snackbar`],
+    });
+  }
+
+  public getAllErrors(form: FormGroup): string {
+    const errors: string[] = [];
+
+    Object.keys(form.controls).forEach(key => {
+      const control = form.get(key);
+      if (control && control.errors) {
+        Object.keys(control.errors).forEach(errorKey => {
+          errors.push(`${key}: ${this.getErrorMessage(errorKey, control.errors![errorKey])}`);
+        });
+      }
+    });
+
+    return errors.join(', ');
+  }
+
+  public getFieldErrorMessage(fieldName: string) {
+    const fieldControl = this.userForm.get(fieldName);
+    if (fieldControl?.hasError('required')) {
+      return 'Field is required';
+    }
+    return fieldControl?.hasError('minlength')
+      ? 'Field must be at least 2 characters'
+      : '';
+  }
+
+  private getErrorMessage(errorKey: string, errorValue: any): string {
+    switch (errorKey) {
+      case 'required': return 'This field is required';
+      case 'email': return 'Invalid email format';
+      case 'minlength': return `Minimum length is ${errorValue.requiredLength}`;
+      case 'maxlength': return `Maximum length is ${errorValue.requiredLength}`;
+      default: return `Invalid ${errorKey}`;
+    }
   }
 }

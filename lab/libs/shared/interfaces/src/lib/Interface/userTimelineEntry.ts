@@ -1,4 +1,4 @@
-import {TIMELINE_ENTRY, VISIBILITY} from '@lab/shared-utils';
+import {TimelineEntry, Visibility} from '@lab/shared-utils';
 
 export interface UserTimelineEntry {
   id: number;
@@ -6,10 +6,10 @@ export interface UserTimelineEntry {
   title: string;
   organisation: string;
   location: string;
-  timelineEntryType: typeof TIMELINE_ENTRY.type.JOB | typeof TIMELINE_ENTRY.type.EDUCATION;
+  timelineEntryType: typeof TimelineEntry.Type.Job | typeof TimelineEntry.Type.Education;
   description?: string;
   startDate: Date;
   endDate?: Date;
   documentation?: File | string;
-  visibility?: typeof VISIBILITY.PRIVATE | typeof VISIBILITY.PUBLIC;
+  visibility?: typeof Visibility.Private | typeof Visibility.Public;
 }
