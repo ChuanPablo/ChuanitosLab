@@ -6,7 +6,7 @@ from .models import TimelineEntry
 
 class TimelineEntrySerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(source='user.id', read_only=True)
-    documentation = serializers.FileField(validators=[validate_documentation])
+    documentation = serializers.FileField(validators=[validate_documentation], required=False, allow_null=True)
 
     class Meta:
         model = TimelineEntry
@@ -45,27 +45,28 @@ class TimelineEntrySerializer(serializers.ModelSerializer):
         if end <= start:
             raise serializers.ValidationError("End date must be after start date.")
 
-        # Exclude current instance if updating
-        queryset = TimelineEntry.objects.for_user(user)
-        if self.instance:
-            queryset = queryset.exclude(id=self.instance.id)
-
-        # Check overlap with entries that have end dates
-        overlapping_with_end = queryset.filter(
-            end_date__isnull=False,
-            start_date__lt=end,
-            end_date__gt=start,
-            timeline_entry_type=timeline_entry_type,
-        ).exists()
-
-        # Check overlap with ongoing entries (no end date)
-        overlapping_ongoing = queryset.filter(
-            end_date__isnull=True,
-            start_date__lt=end,
-            timeline_entry_type=timeline_entry_type,
-        ).exists()
-
-        if overlapping_with_end or overlapping_ongoing:
-            raise serializers.ValidationError("This entry overlaps with an existing timeline entry.")
+        # Not sure if we actually need overlap checking. People can work two jobs at a time
+        # # Exclude current instance if updating
+        # queryset = TimelineEntry.objects.for_user(user)
+        # if self.instance:
+        #     queryset = queryset.exclude(id=self.instance.id)
+        #
+        # # Check overlap with entries that have end dates
+        # overlapping_with_end = queryset.filter(
+        #     end_date__isnull=False,
+        #     start_date__lt=end,
+        #     end_date__gt=start,
+        #     timeline_entry_type=timeline_entry_type,
+        # ).exists()
+        #
+        # # Check overlap with ongoing entries (no end date)
+        # overlapping_ongoing = queryset.filter(
+        #     end_date__isnull=True,
+        #     start_date__lt=end,
+        #     timeline_entry_type=timeline_entry_type,
+        # ).exists()
+        #
+        # if overlapping_with_end or overlapping_ongoing:
+        #     raise serializers.ValidationError("This entry overlaps with an existing timeline entry.")
 
         return super().validate(data)

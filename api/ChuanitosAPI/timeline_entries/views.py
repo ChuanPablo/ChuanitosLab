@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import AllowAny
 
+from users.utils import user_is_admin, get_user_by_id
 from .models import TimelineEntry
 from .serializers import TimelineEntrySerializer
 
@@ -13,7 +13,6 @@ User = get_user_model()
 
 class TimelineEntryViewSet(viewsets.ModelViewSet):
     serializer_class = TimelineEntrySerializer
-    permission_classes = [AllowAny]
 
     def get_queryset(self):
         user_id = self.kwargs.get('user_pk')
@@ -23,24 +22,28 @@ class TimelineEntryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user_id = int(self.kwargs['user_pk'])
-        request_user_id = self.request.user.id
+        request_user = self.request.user
 
-        if user_id != request_user_id:
+        if user_id != request_user.id and not user_is_admin(request_user):
             raise PermissionDenied("You can only create entries for yourself")
 
-        serializer.save(user=self.request.user)
+        serializer.save(user=get_user_by_id(user_id))
 
     def perform_update(self, serializer):
         instance = self.get_object()
+        request_user = self.request.user
 
-        if instance.user_id != self.request.user.id:
+        if instance.user_id != request_user.id and not user_is_admin(request_user):
             raise PermissionDenied("You can only update your own entries")
 
-        serializer.save(user=self.request.user)
+        serializer.save(user=get_user_by_id(instance.user_id))
 
     def perform_destroy(self, instance):
-        if instance.user_id != self.request.user.id:
+        request_user = self.request.user
+
+        if instance.user_id != request_user.id and not user_is_admin(request_user):
             raise PermissionDenied("You can only delete your own entries")
 
         instance.delete()
+
 

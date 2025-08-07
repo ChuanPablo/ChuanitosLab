@@ -8,7 +8,7 @@ class SkillSerializer(serializers.ModelSerializer):
     user_id = serializers.IntegerField(source='user.id', read_only=True)
     level_display = serializers.CharField(source='get_level_display', read_only=True)
     category_display = serializers.CharField(source='get_category_display', read_only=True)
-    documentation = serializers.FileField(validators=[validate_documentation])
+    documentation = serializers.FileField(validators=[validate_documentation], required=False, allow_null=True)
 
     class Meta:
         model = Skill
@@ -27,7 +27,16 @@ class SkillSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['created_at', 'updated_at']
+
+        required_fields = []
+
+        read_only_fields = [
+            'created_at',
+            'updated_at',
+            'category_display',
+            'level_display',
+            'id'
+        ]
 
     def validate_name(self, value):
         """Ensure skill name is not empty and properly formatted"""

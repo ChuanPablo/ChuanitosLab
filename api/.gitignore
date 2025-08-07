@@ -2,3 +2,12 @@
 media/
 *.env
 docker-compose.yml
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+.env

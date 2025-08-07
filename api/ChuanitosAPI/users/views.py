@@ -1,11 +1,14 @@
-# Create your views here.
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db.models import Q, Value, OuterRef, Exists
+from django.db.models.functions import Concat
 from rest_framework import viewsets, status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from skills.models import Skill
+from timeline_entries.models import TimelineEntry
 from .models import CustomUser, EmailVerification
 from .serializers import (
     UserSerializer,
@@ -16,7 +19,6 @@ from .serializers import (
 
 
 class EmailSubmissionView(APIView):
-    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = EmailSubmissionSerializer(data=request.data)
@@ -48,7 +50,6 @@ class EmailSubmissionView(APIView):
 
 
 class CodeVerificationView(APIView):
-    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = CodeVerificationSerializer(data=request.data)
@@ -67,7 +68,6 @@ class CodeVerificationView(APIView):
 
 
 class UserRegistrationView(APIView):
-    permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get('email')
@@ -94,11 +94,63 @@ class UserRegistrationView(APIView):
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    #todo fix last_online date
     serializer_class = UserSerializer
-    permission_classes = [AllowAny]
+
+    def apply_search_query(self, queryset):
+        """
+        Filters QuerySet by matching the given search query with first name, last name, username, skills and organisation
+        """
+        query = self.request.query_params.get('q')
+
+        if not query:
+            return queryset
+
+        # create concatenated field to be able to filter it properly
+        queryset = queryset.annotate(
+            full_name=Concat('first_name', Value(' '), 'last_name')
+        )
+
+        return queryset.filter(
+            Q(full_name__icontains=query) |
+            Q(username__icontains=query) |
+            Q(email__icontains=query) |
+            Exists(Skill.objects.filter(user=OuterRef('pk'), name__icontains=query)) |  # use exist to avoid cartesian products
+            Exists(TimelineEntry.objects.filter(user=OuterRef('pk'), organisation__icontains=query))  # use exist to avoid cartesian products
+        )
+
+    def apply_limit(self, queryset):
+        """
+        Slices QuerySet if there is a limit specified in the request
+        """
+        limit = self.request.query_params.get('l')
+
+        if not limit or not limit.isdigit():
+            return queryset
+
+        return queryset.order_by('-date_created')[:int(limit)]
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        queryset = self.apply_search_query(queryset)
+        queryset = self.apply_limit(queryset)
+
+        if not queryset.query.is_sliced:
+            return queryset.order_by('last_name')
+
+        user_list = list(queryset)
+        user_list.sort(key=lambda user: user.last_name, reverse=True)
+        return user_list
 
     def get_queryset(self):
-        return (CustomUser.objects.all() if self.request.user.is_staff else CustomUser.objects.filter(is_active=True)).order_by('last_name')
+        queryset = CustomUser.objects.all()
+        user = self.request.user
+        user_is_superuser_or_staff = user.is_superuser or user.is_staff
+
+        if not user_is_superuser_or_staff:
+            queryset = queryset.filter(is_superuser=False, is_staff=False, is_active=True)
+
+        return queryset
 
     def create(self, request, *args, **kwargs):
         if not request.user.is_staff:

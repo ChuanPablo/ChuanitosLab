@@ -6,6 +6,8 @@ from users.views import UserViewSet
 
 # from other_app.views import OtherViewSet
 
+# TODO next version: separate file upload end points
+
 # Top-level router
 router = SimpleRouter()
 router.register(r'users', UserViewSet, basename='user')

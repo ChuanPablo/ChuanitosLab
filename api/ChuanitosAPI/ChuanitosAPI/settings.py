@@ -15,20 +15,23 @@ from pathlib import Path
 
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# give CORS_ALLOW_ALL_ORIGINS an initial value
+CORS_ALLOW_ALL_ORIGINS = False
 
+# Base settings
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-
+# check if this is a docker container (production) if it's a docker container it will have (or at least it should have)
+# a DOCKERIZED environment variable
 dockerized = os.getenv('DOCKERIZED', 'False') == 'True'
+
 DEBUG = False
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-print(f"[ENV] MEDIA_URL: {os.environ.get('PROD_MEDIA_URL')}")
-
+# if the DOCKERIZED variable isn't found or false then load variables from .env file
 if not dockerized:
     # Only load .env if not in production
     from dotenv import load_dotenv
@@ -39,18 +42,18 @@ if not dockerized:
     MEDIA_URL = '/media/'
 else:
     MEDIA_URL = os.environ.get('PROD_MEDIA_URL')
+    print('Dockerised!')
 
-print(f'MEDIA_URL: {MEDIA_URL}')
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
-
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS').split(' ')
 CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS').split(' ')
+
+# Log insensitive data from environment variables
+print(f"[ENV] MEDIA_URL: {os.environ.get('PROD_MEDIA_URL')}")
+print(f'MEDIA_URL: {MEDIA_URL}')
+print(f'Django allowed hosts: {ALLOWED_HOSTS}')
+print(f'CORS allowed origins: {CORS_ALLOWED_ORIGINS}{", allowed all = TRUE " if CORS_ALLOW_ALL_ORIGINS else ""}')
 
 # Application definition
 
@@ -81,11 +84,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'ChuanitosAPI.middleware.OnlineStatusMiddleware',
+    'ChuanitosAPI.middleware.DebugMiddleware',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-      'rest_framework.permissions.IsAuthenticated',
+      'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
