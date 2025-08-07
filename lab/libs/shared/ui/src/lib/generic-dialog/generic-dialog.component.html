@@ -1,5 +1,5 @@
 <div class="dialog-header">
-  <mat-toolbar color="primary">
+  <mat-toolbar color="primary" >
     <span>{{ data.title }}</span>
     <span class="spacer"></span>
     <button mat-icon-button (click)="onClose()" matTooltip="Close">
@@ -8,6 +8,6 @@
   </mat-toolbar>
 </div>
 
-<div class="dialog-content">
+<div class="dialog-content" [class.no-scroll]="noScroll">
   <ng-container *ngComponentOutlet="data.component; inputs: data.componentInputs" #componentOutlet></ng-container>
 </div>

@@ -1,5 +1,6 @@
 node_modules
 dist
+tmp
 .nx
 .git
 *.md
@@ -9,3 +10,6 @@ jest.config*
 dockerfile
 docker-compose.yml
 .dockerignore
+.idea
+.github
+.vscode

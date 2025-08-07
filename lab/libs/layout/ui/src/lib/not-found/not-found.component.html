@@ -1,1 +1,64 @@
-<p>{{ title }} works!</p>
+<div class="not-found-container">
+  <div class="content-wrapper">
+    <!-- Completely new SVG -->
+    <div class="illustration">
+      <svg width="300" height="200" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+        <!-- 404 at the top -->
+        <text x="150" y="40" text-anchor="middle" fill="#3F51B5" font-size="36" font-weight="bold" font-family="Arial" class="floating-404">404</text>
+
+        <!-- Robot in center -->
+        <g class="main-character">
+          <!-- Head centered at 150 -->
+          <rect x="125" y="70" width="50" height="40" rx="10" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="2"/>
+
+          <!-- X eyes -->
+          <g class="eyes">
+            <path d="M135 85 L145 95 M145 85 L135 95" stroke="#F44336" stroke-width="3" stroke-linecap="round"/>
+            <path d="M155 85 L165 95 M165 85 L155 95" stroke="#F44336" stroke-width="3" stroke-linecap="round"/>
+          </g>
+
+          <!-- Body centered at 150 -->
+          <rect x="130" y="115" width="40" height="50" rx="8" fill="#E0E0E0" stroke="#BDBDBD" stroke-width="2"/>
+
+          <!-- Arms -->
+          <rect class="arm-left" x="110" y="125" width="15" height="10" rx="5" fill="#E0E0E0" stroke="#BDBDBD" stroke-width="2"/>
+          <rect class="arm-right" x="175" y="125" width="15" height="10" rx="5" fill="#E0E0E0" stroke="#BDBDBD" stroke-width="2"/>
+
+          <!-- Antenna -->
+          <line x1="150" y1="70" x2="150" y2="55" stroke="#9E9E9E" stroke-width="3"/>
+          <circle class="antenna-light" cx="150" cy="55" r="4" fill="#FF5722"/>
+        </g>
+
+        <!-- Floating bubbles -->
+        <circle cx="60" cy="60" r="4" fill="#E3F2FD" class="floating-element"/>
+        <circle cx="240" cy="80" r="3" fill="#BBDEFB" class="floating-element delay-1"/>
+        <circle cx="80" cy="160" r="5" fill="#90CAF9" class="floating-element delay-2"/>
+        <circle cx="220" cy="170" r="3" fill="#64B5F6" class="floating-element delay-3"/>
+
+      </svg>
+    </div>
+
+    <!-- Text content -->
+    <div class="text-content">
+      <h1 class="error-title">Oops! Page Not Found</h1>
+      <p class="error-message">
+        The page you're looking for seems to have wandered off into the digital wilderness.
+        Don't worry, it happens to the best of us!
+      </p>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="actions">
+      <button mat-raised-button color="primary" (click)="goHome()" class="action-button">
+        <mat-icon>home</mat-icon>
+        Take Me Home
+      </button>
+
+      <button mat-stroked-button color="primary" (click)="goBack()" class="action-button">
+        <mat-icon>arrow_back</mat-icon>
+        Go Back
+      </button>
+    </div>
+  </div>
+</div>

@@ -2,9 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { UserSkill, UserSkillDto } from '@lab/shared-interfaces';
-import { ApiEndpoints, LocalStorageKeys } from '@lab/shared-utils';
-import { catchError, EMPTY, map, Observable, throwError } from 'rxjs';
-import { Router } from '@angular/router';
+import { ApiEndpoints, StorageKeys } from '@lab/shared-utils';
+import { catchError, map, Observable } from 'rxjs';
+import { StorageService } from './storage.service';
+import { ErrorService } from './error.service';
 
 /**
  * @summary Service handling all user skills management
@@ -15,17 +16,26 @@ import { Router } from '@angular/router';
 })
 export class SkillsService {
   private config = inject(ConfigService);
+  private errorService = inject(ErrorService);
+  private storageService = inject(StorageService);
+
+  // Bindings
   private apiUrl = this.config.apiUrl;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient) {}
 
   /**
-   * @summary (Getter) Returns HttpHeaders object containing the Bearer token
-   * @description retrieves token from local storage, packs it into a HttpHeaders object and returns it
-   * every time it is called
+   * @summary (Getter) Returns HttpHeaders object containing the Bearer token if authenticated
+   * @description retrieves token from storage, and returns headers with Authorization only if token exists
+   * Returns empty headers if user is not authenticated
    */
   get headers(): HttpHeaders {
-    const token = localStorage.getItem(LocalStorageKeys.AuthToken);
+    const token = this.storageService.get(StorageKeys.AuthToken);
+
+    if (!token) {
+      return new HttpHeaders();
+    }
+
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -77,25 +87,6 @@ export class SkillsService {
   }
 
   /**
-   * @summary Handle HTTP errors with authentication check
-   * @description Common error handler that redirects to login on 401
-   * @param operation - Name of the operation for logging
-   * @returns Observable that throws formatted error
-   */
-  private handleError(operation: string) {
-    return (error: any): Observable<never> => {
-      if (error.status === 401) {
-        this.router.navigate(['/login']);
-        return EMPTY;
-      }
-      return throwError(() => ({
-        message: `Error during ${operation}`,
-        originalError: error
-      }));
-    };
-  }
-
-  /**
    * @summary Retrieves all skills for a specific user
    * @description Sends HTTP GET request to fetch user's skills
    * @param userId - The ID of the user whose skills to retrieve
@@ -106,7 +97,7 @@ export class SkillsService {
     return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}`, { headers: this.headers })
       .pipe(
         map((skills) => skills.map(skillDto => this.mapDtoToSkill(skillDto))),
-        catchError(this.handleError('fetch user skills'))
+        catchError(this.errorService.handleError('fetch user skills'))
       );
   }
 
@@ -120,7 +111,7 @@ export class SkillsService {
     return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Skills}`, { headers: this.headers })
       .pipe(
         map((skills) => skills.map(skillDto => this.mapDtoToSkill(skillDto))),
-        catchError(this.handleError('fetch current user skills'))
+        catchError(this.errorService.handleError('fetch current user skills'))
       );
   }
 
@@ -136,7 +127,7 @@ export class SkillsService {
     return this.http.post<UserSkillDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}/`, skill, { headers: this.headers })
       .pipe(
         map(createdSkillDto => this.mapDtoToSkill(createdSkillDto)),
-        catchError(this.handleError('create skill'))
+        catchError(this.errorService.handleError('create skill'))
       );
   }
 
@@ -152,7 +143,7 @@ export class SkillsService {
     return this.http.post<UserSkillDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Skills}/`, skillDto, { headers: this.headers })
       .pipe(
         map(createdSkillDto => this.mapDtoToSkill(createdSkillDto)),
-        catchError(this.handleError('create current user skill'))
+        catchError(this.errorService.handleError('create current user skill'))
       );
   }
 
@@ -169,7 +160,7 @@ export class SkillsService {
     return this.http.patch<UserSkillDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}/${skillId}/`, skill, { headers: this.headers })
       .pipe(
         map(updatedSkillDto => this.mapDtoToSkill(updatedSkillDto)),
-        catchError(this.handleError('update skill'))
+        catchError(this.errorService.handleError('update skill'))
       );
   }
 
@@ -184,7 +175,7 @@ export class SkillsService {
   deleteSkill(userId: number, skillId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}/${skillId}/`, { headers: this.headers })
       .pipe(
-        catchError(this.handleError('delete skill'))
+        catchError(this.errorService.handleError('delete skill'))
       );
   }
 
@@ -200,7 +191,7 @@ export class SkillsService {
     return this.http.get<UserSkillDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Skills}?category=${category}`, { headers: this.headers })
       .pipe(
         map((skills) => skills.map(skill => this.mapDtoToSkill(skill))),
-        catchError(this.handleError('fetch skills by category'))
+        catchError(this.errorService.handleError('fetch skills by category'))
       );
   }
 }

@@ -1,0 +1,103 @@
+<div class="search-container" *ngIf="!compact">
+  <form (ngSubmit)="onSearchSubmit()" class="search-form">
+    <div class="search-field">
+      <div class="search-input-container">
+        <button
+          type="button"
+          (click)="onSearchIconClick()"
+          class="search-icon-button"
+          aria-label="Search"
+        >
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </button>
+        <input
+          #searchInput
+          type="text"
+          [formControl]="searchControl"
+          [placeholder]="placeholder"
+          class="search-input"
+          (focus)="onInputFocus()"
+          (blur)="onInputBlur()"
+          (keydown)="onKeyDown($event)"
+          autocomplete="off"
+        />
+      </div>
+      
+      <!-- Custom suggestions dropdown -->
+      <div 
+        class="suggestions-dropdown" 
+        *ngIf="showSuggestions && (searchSuggestions$ | async) as suggestions"
+        [class.show]="suggestions.length > 0"
+      >
+        <div
+          *ngFor="let suggestion of suggestions; let i = index"
+          class="suggestion-item"
+          [class.selected]="i === selectedSuggestionIndex"
+          (click)="onSuggestionSelected(suggestion)"
+        >
+          <div class="suggestion-content">
+            <span class="suggestion-text">{{ suggestion.displayText }}</span>
+            <span class="suggestion-type">{{ suggestion.matchType }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div #hiddenContent class="hidden">
+  <ng-content></ng-content>
+</div>
+
+<div class="mobile-search-container" *ngIf="compact">
+  <form (ngSubmit)="onSearchSubmit()" class="mobile-search-form">
+    <div class="mobile-search-field">
+      <div class="search-input-container">
+        <button
+          type="button"
+          (click)="onSearchIconClick()"
+          class="search-icon-button"
+          aria-label="Search"
+        >
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </button>
+        <input
+          #mobileSearchInput
+          type="text"
+          [formControl]="searchControl"
+          [placeholder]="placeholder"
+          class="search-input"
+          (focus)="onInputFocus()"
+          (blur)="onInputBlur()"
+          (keydown)="onKeyDown($event)"
+          autocomplete="off"
+        />
+      </div>
+      
+      <!-- Mobile suggestions dropdown -->
+      <div 
+        class="suggestions-dropdown" 
+        *ngIf="showSuggestions && (searchSuggestions$ | async) as suggestions"
+        [class.show]="suggestions.length > 0"
+      >
+        <div
+          *ngFor="let suggestion of suggestions; let i = index"
+          class="suggestion-item"
+          [class.selected]="i === selectedSuggestionIndex"
+          (click)="onSuggestionSelected(suggestion)"
+        >
+          <div class="suggestion-content">
+            <span class="suggestion-text">{{ suggestion.displayText }}</span>
+            <span class="suggestion-type">{{ suggestion.matchType }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

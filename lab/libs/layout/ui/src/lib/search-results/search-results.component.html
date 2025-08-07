@@ -1,0 +1,59 @@
+<div class="search-results-container">
+  <!-- Search Header -->
+  <div class="search-header">
+    <h1 class="search-title">
+      <mat-icon>search</mat-icon>
+      Search Results
+    </h1>
+    <p class="search-query" *ngIf="searchQuery()">
+      Results for: <strong>"{{ searchQuery() }}"</strong>
+    </p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading()">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p class="loading-text">Searching users...</p>
+  </div>
+
+  <!-- Results Count -->
+  <div class="results-info" *ngIf="hasSearched() && !isLoading()">
+    <mat-chip-set>
+      <mat-chip>
+        <mat-icon matChipAvatar>people</mat-icon>
+        {{ searchResults().length }} {{ searchResults().length === 1 ? 'user' : 'users' }} found
+      </mat-chip>
+    </mat-chip-set>
+  </div>
+
+  <!-- Search Results -->
+  <div class="results-grid" *ngIf="hasResults() && !isLoading()">
+    <lib-user-card
+      *ngFor="let user of searchResults(); trackBy: trackByUserId"
+      [user]="user"
+      [showActions]="true"
+      (viewDetails)="onViewDetails($event)"
+      (click)="viewUserProfile(user.id)">
+    </lib-user-card>
+  </div>
+
+  <!-- No Results State -->
+  <div class="no-results" *ngIf="showNoResults()">
+    <mat-icon class="no-results-icon">search_off</mat-icon>
+    <h2>No users found</h2>
+    <p>We couldn't find any users matching "<strong>{{ searchQuery() }}</strong>"</p>
+    <p class="no-results-suggestions">Try:</p>
+    <ul class="suggestions-list">
+      <li>Checking your spelling</li>
+      <li>Using different keywords</li>
+      <li>Searching for a username or email</li>
+    </ul>
+  </div>
+
+  <!-- Empty State (no search performed) -->
+  <div class="empty-state" *ngIf="!hasSearched() && !isLoading()">
+    <mat-icon class="empty-state-icon">manage_search</mat-icon>
+    <h2>Search for Users</h2>
+    <p>Use the search bar in the navigation to find users by name, username, or email.</p>
+  </div>
+</div>

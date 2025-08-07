@@ -9,6 +9,7 @@ mkdir -p "$(dirname "$CONFIG_PATH")"
 cat <<EOF > "$CONFIG_PATH"
 {
   "API_URL": "${API_URL:-http://localhost:8000}",
+  "APP_NAME": "${APP_NAME:-ChuanitosLab}",
   "version": "1.0.0",
   "features": {
     "enableLogging": true

@@ -1,5 +1,25 @@
-import { UserStatus } from '@lab/shared-utils';
+import { UserSkill } from './UserSkill';
+import { UserTimelineEntry } from './UserTimelineEntry';
 
+/**
+ * @summary List of all available user stati (statusses? :D)
+ */
+export const UserStatus = {
+  Active: 'active',
+  Inactive: 'inactive',
+} as const;
+
+/**
+ * @summary List of API's data entries visibility options
+ */
+export const Visibility = {
+  Public: 'public',
+  Private: 'private',
+}
+
+/**
+ * @summary User interface
+ */
 export interface User {
   id: number;
   email: string;
@@ -15,6 +35,8 @@ export interface User {
   isStaff: boolean;
   isSuperuser: boolean;
   status: typeof UserStatus.Active | typeof UserStatus.Inactive;
+  skills?: UserSkill[];
+  timelineEntries?: UserTimelineEntry[];
   lastActive?: Date;
   joinDate: Date;
 }

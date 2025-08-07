@@ -8,38 +8,58 @@
       </a>
     </div>
 
+    <!-- Search Bar (Desktop) -->
+    <lib-shared-ui-search-bar class="search-bar"
+                              *ngIf="!isMobile()"
+                              (searchSubmitted)="onSearchSubmitted($event)"
+                              (searchIconClicked)="onSearchIconClicked($event)"
+                              (suggestionSelected)="onSuggestionSelected($event)"
+    >
+      Search by name or username
+    </lib-shared-ui-search-bar>
     <!-- Desktop Navigation -->
     <div class="navbar-nav" *ngIf="!isMobile()">
-      <a routerLink="/"
+      <a [routerLink]="`/${BaseRoutes.Dashboard}`"
          routerLinkActive="active-link"
-         [routerLinkActiveOptions]="{exact: true}"
          mat-button>
-        Home
+        Dashboard
       </a>
-      <a routerLink="/"
+      <a [routerLink]="`/${BaseRoutes.About}`"
          routerLinkActive="active-link"
          mat-button>
         About
       </a>
-      <a routerLink="/"
-         routerLinkActive="active-link"
-         mat-button>
-        Services
-      </a>
-      <a routerLink="/"
-         routerLinkActive="active-link"
-         mat-button>
-        Contact
-      </a>
     </div>
 
     <!-- Desktop Actions -->
-    <div class="navbar-actions" *ngIf="!isMobile() && !isLoggedIn()" routerLink="/login">
-      <button mat-stroked-button>Sign In</button>
-      <button mat-raised-button color="accent">Sign Up</button>
-    </div>
-    <div class="navbar-actions" *ngIf="!isMobile() && isLoggedIn()">
-      <button mat-stroked-button (click)="logout()">Sign out</button>
+    <div class="navbar-actions" *ngIf="!isMobile()">
+      <ng-container *ngIf="isLoggedIn(); else signInButton">
+        <button mat-button [matMenuTriggerFor]="userMenu">
+          <mat-icon>account_circle</mat-icon>
+          <span>Profile</span>
+        </button>
+        <mat-menu #userMenu="matMenu">
+          <button mat-menu-item [routerLink]="`/${BaseRoutes.User}/${currentUserId()}`">
+            <mat-icon>person</mat-icon>
+            <span>My Profile</span>
+          </button>
+          <button mat-menu-item routerLink="/settings">
+            <mat-icon>settings</mat-icon>
+            <span>Settings</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Sign Out</span>
+          </button>
+        </mat-menu>
+      </ng-container>
+      <ng-template #signInButton>
+        <button mat-button routerLink="/login">
+          <mat-icon>login</mat-icon>
+          <span>Sign In</span>
+        </button>
+      </ng-template>
     </div>
 
     <!-- Mobile Menu Button -->
@@ -47,75 +67,66 @@
       *ngIf="isMobile()"
       mat-icon-button
       (click)="toggleMobileMenu()"
-      aria-label="Toggle navigation menu">
+      aria-label="Toggle navigation menu"
+    >
       <mat-icon>{{ isMobileMenuOpen() ? 'close' : 'menu' }}</mat-icon>
     </button>
   </div>
 </mat-toolbar>
 
 <!-- Mobile Side Navigation -->
-<mat-sidenav-container
-  class="mobile-sidenav-container"
-  *ngIf="isMobile()"
-  [class.menu-open]="isMobileMenuOpen()">
-  <mat-sidenav
-    #sidenav
-    mode="over"
-    [opened]="isMobileMenuOpen()"
-    (closed)="closeMobileMenu()"
-    position="end">
+<div class="mobile-menu-overlay" 
+     *ngIf="isMobile() && isMobileMenuOpen()"
+     (click)="closeMobileMenu()">
+</div>
 
-    <mat-nav-list>
-      <!-- Navigation Links -->
-      <a mat-list-item
-         routerLink="/"
+<div class="mobile-menu" 
+     *ngIf="isMobile()" 
+     [class.open]="isMobileMenuOpen()">
+  <div class="mobile-menu-content">
+    <!-- Mobile Search -->
+    <div class="mobile-search">
+      <lib-shared-ui-search-bar compact
+                                (searchSubmitted)="onSearchSubmitted($event)"
+                                (searchIconClicked)="onSearchIconClicked($event)"
+                                (suggestionSelected)="onSuggestionSelected($event)"
+                                class="search-bar-mobile">
+        Search by name or username
+      </lib-shared-ui-search-bar>
+    </div>
+    
+    <!-- Navigation Links -->
+    <div class="mobile-nav-links">
+      <a [routerLink]="`/${BaseRoutes.User}`"
          routerLinkActive="active-mobile-link"
-         [routerLinkActiveOptions]="{exact: true}"
-         (click)="closeMobileMenu()">
-        <mat-icon matListItemIcon>home</mat-icon>
-        <span matListItemTitle>Home</span>
+         (click)="closeMobileMenu()"
+         class="mobile-nav-link">
+        <mat-icon>people</mat-icon>
+        <span>Users</span>
       </a>
 
-      <a mat-list-item
-         routerLink="/about"
+      <a routerLink="/about"
          routerLinkActive="active-mobile-link"
-         (click)="closeMobileMenu()">
-        <mat-icon matListItemIcon>info</mat-icon>
-        <span matListItemTitle>About</span>
+         (click)="closeMobileMenu()"
+         class="mobile-nav-link">
+        <mat-icon>info</mat-icon>
+        <span>About</span>
       </a>
+    </div>
 
-      <a mat-list-item
-         routerLink="/services"
-         routerLinkActive="active-mobile-link"
-         (click)="closeMobileMenu()">
-        <mat-icon matListItemIcon>business</mat-icon>
-        <span matListItemTitle>Services</span>
-      </a>
-
-      <a mat-list-item
-         routerLink="/contact"
-         routerLinkActive="active-mobile-link"
-         (click)="closeMobileMenu()">
-        <mat-icon matListItemIcon>contact_mail</mat-icon>
-        <span matListItemTitle>Contact</span>
-      </a>
-
-      <mat-divider></mat-divider>
-
-      <!-- Mobile Actions -->
-      <div class="mobile-actions" *ngIf="!isLoggedIn()" routerLink="/login">
-        <button mat-stroked-button class="mobile-action-btn" (click)="closeMobileMenu()">
-          Sign In
-        </button>
-        <button mat-raised-button color="accent" class="mobile-action-btn" (click)="closeMobileMenu()">
-          Sign Up
-        </button>
-      </div>
-      <div class="mobile-actions" *ngIf="isLoggedIn()">
-        <button mat-raised-button color="accent" class="mobile-action-btn" (click)="logout()">
-          Sign Out
-        </button>
-      </div>
-    </mat-nav-list>
-  </mat-sidenav>
-</mat-sidenav-container>
+    <!-- Mobile Actions -->
+    <div class="mobile-actions" *ngIf="isLoggedIn()">
+      <button mat-raised-button color="accent" class="mobile-action-btn" (click)="logout()">
+        Sign Out
+      </button>
+    </div>
+    <div class="mobile-actions" *ngIf="!isLoggedIn()">
+      <button mat-stroked-button class="mobile-action-btn" routerLink="/login" (click)="closeMobileMenu()">
+        Sign In
+      </button>
+      <button mat-raised-button color="accent" class="mobile-action-btn" routerLink="/register" (click)="closeMobileMenu()">
+        Sign Up
+      </button>
+    </div>
+  </div>
+</div>

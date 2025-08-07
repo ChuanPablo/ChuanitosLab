@@ -8,9 +8,9 @@
     ></lib-shared-ui-avatar>
     <!-- User Info -->
     <mat-card-title class="user-name">
-      <a href="u/{{ user.id}}/">{{ this.getFullName() }}</a>
+      <a [routerLink]="`/u/${user.id}/`" (click)="$event.stopPropagation()">{{ this.getFullName() }}</a>
     </mat-card-title>
-    <mat-card-subtitle class="user-email">{{ user.email }}</mat-card-subtitle>
+    <mat-card-subtitle class="user-email">&commat;{{ user.username }}</mat-card-subtitle>
 
     <!-- Actions Menu -->
     <div class="card-actions" *ngIf="showActions">
@@ -21,20 +21,19 @@
       </button>
 
       <mat-menu #userMenu="matMenu">
-        <button mat-menu-item (click)="onViewDetails()">
+        <button mat-menu-item (click)="onViewDetails($event)">
           <mat-icon>visibility</mat-icon>
           <span>View Details</span>
         </button>
-        <button mat-menu-item (click)="onEdit()">
+        <button mat-menu-item (click)="onEdit($event)" *ngIf="canEditUser(user.id)">
           <mat-icon>edit</mat-icon>
           <span>Edit</span>
         </button>
-        <button mat-menu-item (click)="onToggleStatus()">
+        <button mat-menu-item (click)="onToggleStatus($event)" *ngIf="canEditUser(user.id)">
           <mat-icon>{{ user.status === 'active' ? 'block' : 'check_circle' }}</mat-icon>
           <span>{{ user.status === 'active' ? 'Deactivate' : 'Activate' }}</span>
         </button>
-        <mat-divider></mat-divider>
-        <button mat-menu-item (click)="onDelete()" class="delete-action">
+        <button mat-menu-item (click)="onDelete($event)" class="delete-action" *ngIf="canEditUser(user.id)">
           <mat-icon>delete</mat-icon>
           <span>Delete</span>
         </button>
@@ -43,19 +42,6 @@
   </mat-card-header>
 
   <mat-card-content>
-    <!-- Role and Department -->
-    <div class="user-details">
-      <div class="detail-row">
-        <mat-icon class="detail-icon">work</mat-icon>
-        <span class="detail-text">TODO User Role</span>
-      </div>
-
-      <div class="detail-row" >
-        <mat-icon class="detail-icon">business</mat-icon>
-        <span class="detail-text">TODO User Department</span>
-      </div>
-    </div>
-
     <!-- Status Chip -->
     <div class="status-section">
       <mat-chip-set>
@@ -84,11 +70,11 @@
   </mat-card-content>
 
   <mat-card-actions *ngIf="showActions" class="card-footer-actions">
-    <button mat-button (click)="onViewDetails()">
+    <button mat-button (click)="onViewDetails($event)">
       <mat-icon>visibility</mat-icon>
       View
     </button>
-    <button *ngIf="canEditUser(user.id)" mat-button (click)="onEdit()">
+    <button *ngIf="canEditUser(user.id)" mat-button (click)="onEdit($event)">
       <mat-icon>edit</mat-icon>
       Edit
     </button>

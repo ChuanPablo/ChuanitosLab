@@ -14,10 +14,10 @@
         <!-- User Info Section -->
         <div class="user-info-section">
           <div class="user-basic-info">
-            <a href="u/{{ user.id}}/">
+            <a [routerLink]="`/u/${user.id}/`">
               <h1 class="user-name" [class.compact]="isCompact">{{ getFullName() }}</h1>
             </a>
-            <p class="user-email" [class.compact]="isCompact" [class.hidden]="isCompact">{{ user.email }}</p>
+<!--            <p class="user-email" [class.compact]="isCompact" [class.hidden]="isCompact">{{ user.email }}</p>-->
             <p class="user-username" [class.compact]="isCompact" [class.hidden]="isCompact">&commat;{{ user.username }}</p>
           </div>
 
@@ -310,7 +310,7 @@
 
       <!-- Right Main Panel - Timeline -->
       <div class="main-panel">
-        <mat-card class="timeline-card">
+        <mat-card class="timeline-container-card">
           <mat-card-header>
             <mat-card-title>
               <mat-icon>timeline</mat-icon>
@@ -448,36 +448,13 @@
                   </div>
 
                   <div *ngFor="let entry of timelineEntries; let isLast = last" class="timeline-entry">
-                    <div class="timeline-entry-header">
-                      <div class="entry-icon">
-                        <mat-icon [color]="entry.timelineEntryType.toLowerCase() === 'job' ? 'primary' : 'accent'">
-                          {{ entry.timelineEntryType.toLowerCase() === 'job' ? 'work' : 'school' }}
-                        </mat-icon>
-                      </div>
-                      <div class="entry-info">
-                        <h3 class="entry-title">{{ entry.title }}</h3>
-                        <p class="entry-organisation">{{ entry.organisation }}</p>
-                        <div class="entry-metadata">
-                          <span class="entry-dates">{{ formatDateRange(entry.startDate, entry.endDate) }}</span>
-                          <span class="entry-duration">{{ calculateDuration(entry.startDate, entry.endDate) }}</span>
-                          <span *ngIf="entry.location" class="entry-location">
-                            <mat-icon>location_on</mat-icon>
-                            {{ entry.location }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div *ngIf="entry.description" class="timeline-entry-description">
-                      <p>{{ entry.description }}</p>
-                    </div>
-                    <div class="timeline-entry-actions">
-                      <button *ngIf="canEditUser(user.id)" mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button *ngIf="canEditUser(user.id)" mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
+                    <lib-users-ui-user-timeline-entry-card
+                      [type]="entry.timelineEntryType"
+                      [timelineEntry]="entry"
+                      (editTimelineEntry)="onEditTimelineEntry(entry)"
+                      (deleteTimelineEntry)="onDeleteTimelineEntry(entry)"
+                      (viewDocumentation)="onViewDocumentation(entry)">
+                    </lib-users-ui-user-timeline-entry-card>
                     <mat-divider *ngIf="!isLast"></mat-divider>
                   </div>
                 </div>
@@ -494,35 +471,14 @@
                     <p>No work experience added</p>
                   </div>
 
-                  <div *ngFor="let entry of jobEntries; let isLast = last" class="timeline-entry">
-                    <div class="timeline-entry-header">
-                      <div class="entry-icon">
-                        <mat-icon color="primary">work</mat-icon>
-                      </div>
-                      <div class="entry-info">
-                        <h3 class="entry-title">{{ entry.title }}</h3>
-                        <p class="entry-organisation">{{ entry.organisation }}</p>
-                        <div class="entry-metadata">
-                          <span class="entry-dates">{{ formatDateRange(entry.startDate, entry.endDate) }}</span>
-                          <span class="entry-duration">{{ calculateDuration(entry.startDate, entry.endDate) }}</span>
-                          <span *ngIf="entry.location" class="entry-location">
-                            <mat-icon>location_on</mat-icon>
-                            {{ entry.location }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div *ngIf="entry.description" class="timeline-entry-description">
-                      <p>{{ entry.description }}</p>
-                    </div>
-                    <div class="timeline-entry-actions">
-                      <button mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
+                  <div *ngFor="let entry of jobEntries; let isLast = last">
+                    <lib-users-ui-user-timeline-entry-card
+                      [type]="entry.timelineEntryType"
+                      [timelineEntry]="entry"
+                      (editTimelineEntry)="onEditTimelineEntry(entry)"
+                      (deleteTimelineEntry)="onDeleteTimelineEntry(entry)"
+                      (viewDocumentation)="onViewDocumentation(entry)">
+                    </lib-users-ui-user-timeline-entry-card>
                     <mat-divider *ngIf="!isLast"></mat-divider>
                   </div>
                 </div>
@@ -540,34 +496,13 @@
                   </div>
 
                   <div *ngFor="let entry of educationEntries; let isLast = last" class="timeline-entry">
-                    <div class="timeline-entry-header">
-                      <div class="entry-icon">
-                        <mat-icon color="accent">school</mat-icon>
-                      </div>
-                      <div class="entry-info">
-                        <h3 class="entry-title">{{ entry.title }}</h3>
-                        <p class="entry-organisation">{{ entry.organisation }}</p>
-                        <div class="entry-metadata">
-                          <span class="entry-dates">{{ formatDateRange(entry.startDate, entry.endDate) }}</span>
-                          <span class="entry-duration">{{ calculateDuration(entry.startDate, entry.endDate) }}</span>
-                          <span *ngIf="entry.location" class="entry-location">
-                            <mat-icon>location_on</mat-icon>
-                            {{ entry.location }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div *ngIf="entry.description" class="timeline-entry-description">
-                      <p>{{ entry.description }}</p>
-                    </div>
-                    <div class="timeline-entry-actions">
-                      <button mat-icon-button (click)="onEditTimelineEntry(entry)" matTooltip="Edit entry" class="timeline-action-btn">
-                        <mat-icon>edit</mat-icon>
-                      </button>
-                      <button mat-icon-button (click)="onDeleteTimelineEntry(entry)" matTooltip="Delete entry" class="timeline-action-btn delete-btn">
-                        <mat-icon>delete</mat-icon>
-                      </button>
-                    </div>
+                    <lib-users-ui-user-timeline-entry-card
+                      [type]="entry.timelineEntryType"
+                      [timelineEntry]="entry"
+                      (editTimelineEntry)="onEditTimelineEntry(entry)"
+                      (deleteTimelineEntry)="onDeleteTimelineEntry(entry)"
+                      (viewDocumentation)="onViewDocumentation(entry)">
+                    </lib-users-ui-user-timeline-entry-card>
                     <mat-divider *ngIf="!isLast"></mat-divider>
                   </div>
                 </div>

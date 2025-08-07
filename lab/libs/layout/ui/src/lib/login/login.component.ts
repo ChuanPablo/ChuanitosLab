@@ -1,7 +1,7 @@
-import { Component, OnInit, Signal } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { AuthService } from '@lab/core-services';
+import { AuthService, DialogService } from '@lab/core-services';
 import { CommonModule} from "@angular/common";
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { RaisedSpinnerButtonComponent } from '@lab/shared-ui';
+import { UserRegistrationWizardComponent } from '../user-registration-wizard/user-registration-wizard.component';
 
 @Component({
   selector: 'lib-layout-login',
@@ -38,10 +39,6 @@ import { RaisedSpinnerButtonComponent } from '@lab/shared-ui';
  */
 export class LoginComponent implements OnInit {
   /**
-   * Flag representing auth status
-   */
-  isLoggedIn!: Signal<boolean>;
-  /**
    * From group that handles login form
    */
   loginForm!: FormGroup;
@@ -61,16 +58,15 @@ export class LoginComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
+    //private storageService: StorageService,
+    private dialogService: DialogService,
     private formBuilder: FormBuilder,
     private router: Router,
     private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn;
-    // if (this.isLoggedIn()) {
-    //   this.router.navigate(['/']);
-    // }
+    //this.storageService.clear();
     this.initForm();
   }
 
@@ -91,10 +87,11 @@ export class LoginComponent implements OnInit {
   onLogin() {
 
     if (this.loginForm.valid) {
-      const { email, password } = this.loginForm.value;
+      const { email, password, rememberMe } = this.loginForm.value;
       this.isLoading = true;
-      this.authService.login(email, password).subscribe({
+      this.authService.login(email, password, rememberMe).subscribe({
         next: () => {
+          this.isLoading = false;
           this.snackBar.open('Login successful', 'Close', {
             duration: 500,
             panelClass: ['success-snackbar'],
@@ -104,7 +101,18 @@ export class LoginComponent implements OnInit {
           });
         },
         error: (err) => {
+          this.isLoading = false;
           console.error('Login failed:', err);
+          let errorMessage = 'Login failed. Please try again.';
+          if (err.status === 401) {
+            errorMessage = 'Invalid email or password.';
+          } else if (err.status === 0) {
+            errorMessage = 'Unable to connect to server. Please check your connection.';
+          }
+          this.snackBar.open(errorMessage, 'Close', {
+            duration: 5000,
+            panelClass: ['error-snackbar'],
+          });
         },
       });
     } else {
@@ -146,5 +154,15 @@ export class LoginComponent implements OnInit {
     return passwordControl?.hasError('minlength')
       ? 'Password must be at least 6 characters'
       : '';
+  }
+
+  public onSignup(event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dialogService.openGenericDialog({
+      title: 'Sign Up',
+      componentClass: UserRegistrationWizardComponent,
+      noScroll: true
+    })
   }
 }

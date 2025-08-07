@@ -1,20 +1,23 @@
-import { Component, OnInit, inject, signal, Signal, effect } from '@angular/core';
+import { Component, effect, inject, Signal, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatDialog } from '@angular/material/dialog';
 import { User } from '@lab/shared-interfaces';
-import { UserAuthUtilsService, UserService } from '@lab/core-services';
+import {
+  DialogService,
+  UserAuthUtilsService,
+  UserService,
+} from '@lab/core-services';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of, tap } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { GenericDialogComponent } from '@lab/shared-ui';
-import { UserCardComponent } from '../user-card/user-card.component';
-import { UserRegistrationWizardComponent } from '../user-registration-wizard/user-registration-wizard.component';
+import { UserCardComponent } from '@lab/user-ui';
 import { EditUserComponent } from '../edit-user/edit-user.component';
 import { UserDetailComponent } from '../user-detail/user-detail.component';
+import { Utilities } from '@lab/shared-utils';
+import { UserRegistrationWizardComponent } from '../user-registration-wizard/user-registration-wizard.component';
 
 @Component({
   selector: 'lib-layout-dashboard',
@@ -31,13 +34,14 @@ import { UserDetailComponent } from '../user-detail/user-detail.component';
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
+  public static readonly USER_LIMIT = 6;
   private errorMessage = signal('');
   private userService = inject(UserService);
   private authUtils = inject(UserAuthUtilsService);
-  private dialog = inject(MatDialog);
+  private dialogService = inject(DialogService);
 
   public users: Signal<User[]> = toSignal(
-    this.userService.getAllUsers().pipe(
+    this.userService.getAllUsersLimited(DashboardComponent.USER_LIMIT).pipe(
       tap(() => this.errorMessage.set('')),
       catchError((error: any) => {
         this.errorMessage.set(error.message);
@@ -47,8 +51,10 @@ export class DashboardComponent {
     { initialValue: [] }
   );
 
-  public canAddUser = this.authUtils.canAddUser;
-  public isAdmin = this.authUtils.isAdmin;
+  // Bindings
+  public readonly canAddUser = this.authUtils.canAddUser;
+  public readonly isAdmin = this.authUtils.isAdmin;
+  public readonly trackByUserId = Utilities.trackByUserId;
 
   constructor(private snackBar: MatSnackBar) {
     effect(() => {
@@ -63,55 +69,18 @@ export class DashboardComponent {
     });
   }
 
-  trackByUserId(index: number, user: User): number {
-    return user.id;
-  }
-
   onAddUser() {
-    const dialogRef = this.dialog.open(GenericDialogComponent, {
-      data: {
-        title: 'Add User',
-        component: UserRegistrationWizardComponent,
-      },
-      width: '95vw',
-      maxWidth: '1200px',
-      height: '90vh',
-      maxHeight: '800px',
-      panelClass: 'user-detail-dialog',
-      autoFocus: false,
-      restoreFocus: false,
-    });
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        console.log('Dialog result:', result);
-      }
+    this.dialogService.openGenericDialog({
+      title: 'Add User',
+      componentClass: UserRegistrationWizardComponent,
     });
   }
 
   onEditUser(user: User) {
-    console.log('Edit user:', user);
-    console.log('View details for user:', user);
-
-    const dialogRef = this.dialog.open(GenericDialogComponent, {
-      data: {
-        title: 'Edit User',
-        component: EditUserComponent,
-        componentInputs: { user },
-      },
-      width: '95vw',
-      maxWidth: '1200px',
-      height: '90vh',
-      maxHeight: '800px',
-      panelClass: 'user-detail-dialog',
-      autoFocus: false,
-      restoreFocus: false,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        console.log('Dialog result:', result);
-        // Handle any actions from the dialog if needed
-      }
+    this.dialogService.openGenericDialog({
+      title: 'Edit User',
+      componentClass: EditUserComponent,
+      componentInputs: { user },
     });
   }
 
@@ -126,34 +95,10 @@ export class DashboardComponent {
   }
 
   onViewDetails(user: User) {
-    console.log('View details for user:', user);
-
-    const dialogRef = this.dialog.open(GenericDialogComponent, {
-      data: {
-        title: 'User Details',
-        component: UserDetailComponent,
-        componentInputs: { user },
-      },
-      width: '95vw',
-      maxWidth: '1200px',
-      height: '90vh',
-      maxHeight: '800px',
-      panelClass: 'user-detail-dialog',
-      autoFocus: false,
-      restoreFocus: false,
-    });
-
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        console.log('Dialog result:', result);
-
-        // Handle editUser event from user-detail component
-        if (result.action === 'editUser' && result.data) {
-          console.log('Edit user requested from user-detail:', result.data);
-          // Close the current dialog and open edit dialog
-          this.onEditUser(result.data);
-        }
-      }
+    this.dialogService.openGenericDialog({
+      title: 'User Details',
+      componentClass: UserDetailComponent,
+      componentInputs: { inputUser: user },
     });
   }
 }

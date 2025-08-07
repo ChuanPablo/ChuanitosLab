@@ -1,15 +1,20 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { AuthService, ConfigService } from '@lab/core-services';
-import { inject } from '@angular/core';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { ReactiveFormsModule, FormControl, FormsModule } from '@angular/forms';
+import { AuthService, ConfigService, SearchService, SearchSuggestion, UserAuthUtilsService } from '@lab/core-services';
+import { BaseRoutes, Utilities } from '@lab/shared-utils';
+import { SearchBarComponent } from '@lab/shared-ui';
 
 @Component({
   selector: 'lib-layout-navbar',
@@ -17,33 +22,38 @@ import { inject } from '@angular/core';
   imports: [
     CommonModule,
     RouterModule,
+    ReactiveFormsModule,
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
     MatMenuModule,
     MatSidenavModule,
-    MatListModule
+    MatListModule,
+    MatInputModule,
+    MatFormFieldModule,
+    MatAutocompleteModule,
+    FormsModule,
+    SearchBarComponent,
   ],
   templateUrl: './navbar.component.html',
-  styleUrl: './navbar.component.scss'
+  styleUrl: './navbar.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class NavbarComponent {
-  //Inject services here so we can use their signals directly here
   private authService = inject(AuthService);
-  private config = inject(ConfigService)
+  private config = inject(ConfigService);
+  private authUtils = inject(UserAuthUtilsService)
 
-  //expose desired signals here
   appName = this.config.appName;
   isLoggedIn = this.authService.isLoggedIn;
-
-  isMobileMenuOpen = signal(false);
   isMobile = signal(false);
+  isMobileMenuOpen = signal(false);
+  currentUserId = this.authUtils.currentUserId;
 
   constructor(
     private breakpointObserver: BreakpointObserver,
-    private router: Router,
+    private router: Router
   ) {
-    // Watch for mobile breakpoint changes
     this.breakpointObserver
       .observe([Breakpoints.Handset])
       .subscribe((result) => {
@@ -55,14 +65,46 @@ export class NavbarComponent {
   }
 
   toggleMobileMenu() {
-    this.isMobileMenuOpen.update(value => !value);
+    console.log('Before toggle:', this.isMobileMenuOpen());
+    this.isMobileMenuOpen.update((value) => !value);
+    console.log('After toggle:', this.isMobileMenuOpen());
   }
 
   closeMobileMenu() {
     this.isMobileMenuOpen.set(false);
   }
 
-  logout(){
+  logout() {
     this.authService.logout();
   }
+
+  /**
+   * @summary Handles search form submission
+   * @description Navigates to search results page with the current query
+   */
+  onSearchSubmitted(query: string): void {
+    if (query) {
+      this.router.navigate(['/', BaseRoutes.Search], { queryParams: { q: query } });
+    }
+  }
+
+  /**
+   * @summary Handles suggestion selection
+   * @description Navigates to search results or user profile based on suggestion
+   * @param suggestion - The selected search suggestion
+   */
+  onSuggestionSelected(suggestion: SearchSuggestion): void {
+    console.log('suggestion selected', suggestion);
+    this.router.navigate(['/', BaseRoutes.User, suggestion.user.id]);
+  }
+
+  /**
+   * @summary Handles search icon click
+   * @description Triggers search submission
+   */
+  onSearchIconClicked(query: string): void {
+    this.onSearchSubmitted(query);
+  }
+
+  protected readonly BaseRoutes = BaseRoutes;
 }

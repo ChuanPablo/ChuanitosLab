@@ -1,0 +1,52 @@
+<div class="about-container">
+  <div class="hero-section">
+    <h1 class="project-title">{{ projectName }}</h1>
+    <p class="project-subtitle">A Playground for Web Development experiments</p>
+  </div>
+
+  <div class="content-section">
+    <div class="project-overview">
+      <h2>About the Project</h2>
+      <p class="overview-text">
+        {{ projectName }} serves as a dynamic playground for exploring and showcasing cutting-edge web development projects.
+        This platform demonstrates the evolution of modern web technologies through practical, interactive applications.
+        The entire platform is build using Angular 19 in cooperation with Django, deployed via Docker on a TrueNAS scale and protected by CloudFlare.
+        The code can be found on my <a href="https://github.com/ChuanPablo/ChuanitosLab" target="_blank">GitHub repository</a>.
+      </p>
+    </div>
+
+    <div class="featured-project">
+      <h2>Featured Project: Interactive CV</h2>
+      <div class="project-description">
+        <p>
+          The cornerstone of {{ projectName }} is an interactive CV platform. The concept is simple yet powerful:
+        </p>
+        <p>
+          The initial idea was to just turn my CV into a website to showcase my web development skills.
+          But the developer in me couldn't just create a static CV website. So it eventually turned into a user driven platform,
+          where users can create and customize their own professional CV profile.
+        </p>
+      </div>
+    </div>
+
+    <div class="features-section">
+      <h2>Key Features</h2>
+      <div class="features-grid">
+        <div class="feature-card" *ngFor="let feature of features">
+          <h3 class="feature-title">{{ feature.title }}</h3>
+          <p class="feature-description">{{ feature.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="platform-benefits">
+      <h2>Platform Benefits</h2>
+      <p>
+        Beyond showcasing individual projects, {{ projectName }} demonstrates advanced web development concepts including
+        user authentication, database management, responsive design, and modern frontend frameworks. Each registered user
+        can create their own personalized CV profile, making this a truly collaborative platform for professional networking
+        and career development.
+      </p>
+    </div>
+  </div>
+</div>

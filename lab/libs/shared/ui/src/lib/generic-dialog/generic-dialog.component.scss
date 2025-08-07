@@ -5,9 +5,19 @@
 }
 
 .dialog-content {
-  padding: 20px;
+  padding: 0;
   min-width: 400px;
-  max-width: 90vw;
-  max-height: 80vh;
+  max-width: 95vw;
+  max-height: 95vh;
   overflow-y: auto;
+  scrollbar-width: none;
+}
+.mat-toolbar-single-row {
+  height: 2.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.no-scroll{
+  overflow: hidden;
 }

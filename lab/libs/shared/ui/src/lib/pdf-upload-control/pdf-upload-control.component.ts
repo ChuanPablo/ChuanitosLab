@@ -8,7 +8,7 @@ import {
   Validator
 } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
-import { BaseFileFormControl } from '@lab/shared-interfaces';
+import { BaseFileFormControl } from '@lab/core-base';
 
 @Component({
   selector: 'lib-shared-ui-pdf-upload-control',

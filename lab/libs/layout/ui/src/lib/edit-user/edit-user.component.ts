@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { User } from '@lab/shared-interfaces';
 import { UserService } from '@lab/core-services';
@@ -24,12 +24,7 @@ import { catchError, finalize } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AvatarComponent } from '@lab/shared-ui';
-import {
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 /**
  * @summary Edit user component
@@ -68,6 +63,9 @@ export class EditUserComponent implements OnInit {
   @Input() user?: User;
   @Input() userId?: number;
 
+  // Outputs ----
+  @Output() editingCanceled = new EventEmitter<void>();
+
   // Dependency Injection ----
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
@@ -78,6 +76,7 @@ export class EditUserComponent implements OnInit {
   // Globals ----
   isLoading = false;
   isSubmittingUser = false;
+  avatarHasChanged = false;
   error: string | null = null;
   userForm: FormGroup;
 
@@ -212,11 +211,21 @@ export class EditUserComponent implements OnInit {
   }
 
   private updateAvatar(file: File) {
+    this.avatarHasChanged = true;
     const formData = new FormData();
     formData.append('avatar', file);
     this.userService
       .updateUser(this.user!.id, formData)
       .subscribe(this.getPostUpdateAction());
+  }
+
+  private resetAvatar() {
+    if (!this.avatarHasChanged){
+      return;
+    }
+    const formData = new FormData();
+    formData.append('avatar', this.originalAvatarUrl);
+    this.userService.updateUser(this.user!.id, formData).subscribe(this.getPostUpdateAction());
   }
 
   public onSubmitUser() {
@@ -278,12 +287,7 @@ export class EditUserComponent implements OnInit {
     if (fullReset) {
       this.resetAvatar();
     }
-  }
-
-  private resetAvatar() {
-    const formData = new FormData();
-    formData.append('avatar', this.originalAvatarUrl);
-    this.userService.updateUser(this.user!.id, formData).subscribe(this.getPostUpdateAction());
+    this.editingCanceled.emit();
   }
 
   private displaySnackbar(message: string, success = true) {

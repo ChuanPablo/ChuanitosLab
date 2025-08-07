@@ -2,9 +2,10 @@ import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { UserTimelineEntry, UserTimelineEntryDto } from '@lab/shared-interfaces';
-import { ApiEndpoints, LocalStorageKeys } from '@lab/shared-utils';
-import { catchError, EMPTY, map, Observable, throwError } from 'rxjs';
-import { Router } from '@angular/router';
+import { ApiEndpoints, StorageKeys } from '@lab/shared-utils';
+import { catchError, map, Observable } from 'rxjs';
+import { StorageService } from './storage.service';
+import { ErrorService } from './error.service';
 
 /**
  * @summary Service handling all user timeline entries management
@@ -15,17 +16,24 @@ import { Router } from '@angular/router';
 })
 export class TimelineService {
   private config = inject(ConfigService);
+  private storageService = inject(StorageService);
+  private errorService = inject(ErrorService);
   private apiUrl = this.config.apiUrl;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient) {}
 
   /**
-   * @summary (Getter) Returns HttpHeaders object containing the Bearer token
-   * @description retrieves token from local storage, packs it into a HttpHeaders object and returns it
-   * every time it is called
+   * @summary (Getter) Returns HttpHeaders object containing the Bearer token if authenticated
+   * @description retrieves token from storage, and returns headers with Authorization only if token exists
+   * Returns empty headers if user is not authenticated
    */
   get headers(): HttpHeaders {
-    const token = localStorage.getItem(LocalStorageKeys.AuthToken);
+    const token = this.storageService.get(StorageKeys.AuthToken);
+
+    if (!token) {
+      return new HttpHeaders();
+    }
+
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -46,6 +54,7 @@ export class TimelineService {
       location: entryDto.location,
       timelineEntryType: entryDto.timeline_entry_type,
       description: entryDto.description ? entryDto.description : '',
+      documentation: entryDto.documentation ? entryDto.documentation : '',
       startDate: new Date(entryDto.start_date),
       endDate: entryDto.end_date ? new Date(entryDto.end_date) : undefined,
       visibility: entryDto.visibility,
@@ -74,25 +83,6 @@ export class TimelineService {
   }
 
   /**
-   * @summary Handle HTTP errors with authentication check
-   * @description Common error handler that redirects to login on 401
-   * @param operation - Name of the operation for logging
-   * @returns Observable that throws formatted error
-   */
-  private handleError(operation: string) {
-    return (error: any): Observable<never> => {
-      if (error.status === 401) {
-        this.router.navigate(['/login']);
-        return EMPTY;
-      }
-      return throwError(() => ({
-        message: `Error during ${operation}`,
-        originalError: error
-      }));
-    };
-  }
-
-  /**
    * @summary Retrieves all timeline entries for a specific user
    * @description Sends HTTP GET request to fetch user's timeline entries
    * @param userId - The ID of the user whose timeline entries to retrieve
@@ -103,7 +93,7 @@ export class TimelineService {
     return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
-        catchError(this.handleError('fetch user timeline entries'))
+        catchError(this.errorService.handleError('fetch user timeline entries'))
       );
   }
 
@@ -117,7 +107,7 @@ export class TimelineService {
     return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Timeline}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
-        catchError(this.handleError('fetch current user timeline entries'))
+        catchError(this.errorService.handleError('fetch current user timeline entries'))
       );
   }
 
@@ -133,7 +123,7 @@ export class TimelineService {
     return this.http.post<UserTimelineEntryDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}/`, entry, { headers: this.headers })
       .pipe(
         map(createdEntryDto => this.mapDtoToEntry(createdEntryDto)),
-        catchError(this.handleError('create timeline entry'))
+        catchError(this.errorService.handleError('create timeline entry'))
       );
   }
 
@@ -149,7 +139,7 @@ export class TimelineService {
     return this.http.post<UserTimelineEntryDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}/${ApiEndpoints.Timeline}/`, entryDto, { headers: this.headers })
       .pipe(
         map(createdEntryDto => this.mapDtoToEntry(createdEntryDto)),
-        catchError(this.handleError('create current user timeline entry'))
+        catchError(this.errorService.handleError('create current user timeline entry'))
       );
   }
 
@@ -166,7 +156,7 @@ export class TimelineService {
     return this.http.patch<UserTimelineEntryDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}/${entryId}/`, entry, { headers: this.headers })
       .pipe(
         map(updatedEntryDto => this.mapDtoToEntry(updatedEntryDto)),
-        catchError(this.handleError('update timeline entry'))
+        catchError(this.errorService.handleError('update timeline entry'))
       );
   }
 
@@ -181,7 +171,7 @@ export class TimelineService {
   deleteTimelineEntry(userId: number, entryId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}/${entryId}/`, { headers: this.headers })
       .pipe(
-        catchError(this.handleError('delete timeline entry'))
+        catchError(this.errorService.handleError('delete timeline entry'))
       );
   }
 
@@ -197,7 +187,7 @@ export class TimelineService {
     return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Users}/${userId}/timeline?type=${type}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
-        catchError(this.handleError('fetch timeline entries by type'))
+        catchError(this.errorService.handleError('fetch timeline entries by type'))
       );
   }
 
@@ -219,7 +209,7 @@ export class TimelineService {
     return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}?${params}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
-        catchError(this.handleError('fetch timeline entries by date range'))
+        catchError(this.errorService.handleError('fetch timeline entries by date range'))
       );
   }
 
@@ -235,7 +225,7 @@ export class TimelineService {
     return this.http.get<UserTimelineEntryDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/${ApiEndpoints.Timeline}?sort=${order}`, { headers: this.headers })
       .pipe(
         map((entries) => entries.map(entry => this.mapDtoToEntry(entry))),
-        catchError(this.handleError('fetch sorted timeline entries'))
+        catchError(this.errorService.handleError('fetch sorted timeline entries'))
       );
   }
 }

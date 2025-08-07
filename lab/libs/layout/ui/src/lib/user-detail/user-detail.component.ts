@@ -1,17 +1,23 @@
 import {
-  Component,
-  Input,
-  OnInit,
-  OnDestroy,
   AfterViewInit,
-  inject,
-  ElementRef,
-  ViewChild,
   ChangeDetectorRef,
-  EventEmitter, Output
+  Component,
+  ElementRef,
+  EventEmitter,
+  inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,26 +31,42 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { DateAdapter, MatNativeDateModule } from '@angular/material/core';
 import { MatMenuModule } from '@angular/material/menu';
-import { User, UserSkill, UserTimelineEntry } from '@lab/shared-interfaces';
-import { UserService, SkillsService, TimelineService, UserAuthUtilsService } from '@lab/core-services';
-import { Skill, Visibility, TimelineEntry, Utilities } from '@lab/shared-utils';
+import {
+  Skill,
+  TimelineEntry,
+  User,
+  UserSkill,
+  UserTimelineEntry,
+  Visibility,
+} from '@lab/shared-interfaces';
+import {
+  SkillsService,
+  TimelineService,
+  UserAuthUtilsService,
+  UserService,
+} from '@lab/core-services';
+import { UtcDateAdapter, Utilities } from '@lab/shared-utils';
 import {
   AvatarComponent,
   AvatarSize,
   ConfirmDeleteDialogComponent,
   GenericDialogComponent,
-  PdfUploadControlComponent, RaisedSpinnerButtonComponent
+  PdfUploadControlComponent,
+  RaisedSpinnerButtonComponent,
 } from '@lab/shared-ui';
-import { ActivatedRoute } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError, finalize, switchMap } from 'rxjs/operators';
 import { EditUserComponent } from '../edit-user/edit-user.component';
-import {UserSkillChipComponent} from "@lab/user-ui";
+import {
+  UserSkillChipComponent,
+  UserTimelineEntryCardComponent,
+} from '@lab/user-ui';
 
 interface SkillFormData {
   name: string;
@@ -67,7 +89,6 @@ interface TimelineFormData {
   documentation?: File | null;
   visibility: string;
 }
-
 
 @Component({
   selector: 'lib-layout-user-detail',
@@ -96,9 +117,14 @@ interface TimelineFormData {
     AvatarComponent,
     UserSkillChipComponent,
     RaisedSpinnerButtonComponent,
+    UserTimelineEntryCardComponent,
+    RouterLink,
   ],
   templateUrl: './user-detail.component.html',
   styleUrl: './user-detail.component.scss',
+  providers: [
+    { provide: DateAdapter, useClass: UtcDateAdapter }
+  ],
 })
 export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   @Input() inputUser?: User; // Optional - when passed from parent component
@@ -118,6 +144,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
   protected readonly AvatarSize = AvatarSize;
+  private paramsChangedSubscription?: Subscription;
 
   // AuthUtils
   canEditUser = (userId: number) => this.authUtils.canEditUser(userId);
@@ -160,7 +187,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   editingTimelineId: number | null = null;
   isSubmittingTimeline = false;
 
-  // Constants for dropdowns
+  // Constants for dropdowns todo next version: use nlsx resources
   skillCategories = [
     { value: Skill.Category.TECHNICAL, label: 'Technical' },
     { value: Skill.Category.LANGUAGE, label: 'Language' },
@@ -186,7 +213,8 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     { value: TimelineEntry.Type.Education, label: 'Education' },
   ];
 
-  constructor() {
+  constructor(private dateAdapter: DateAdapter<any>) {
+    console.log('dateAdapter', this.dateAdapter);
     this.skillForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(30)]],
       category: ['', Validators.required],
@@ -213,6 +241,10 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit() {
+    this.paramsChangedSubscription = this.route.params.subscribe((params) => {
+      this.userId = Number(params['userId']);
+      this.loadUserData();
+    });
     this.loadUserData();
   }
 
@@ -311,7 +343,10 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
       .subscribe(({ user, skills, timeline }) => {
         this.user = user;
         this.userSkills = skills;
-        this.timelineEntries = timeline;
+        this.timelineEntries = timeline.sort(
+          (a, b) =>
+            new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+        );
 
         this.categorizeSkills();
         this.categorizeTimelineEntries();
@@ -320,17 +355,11 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private categorizeSkills() {
     this.technicalSkills = this.userSkills.filter(
-      (skill) =>
-        skill.category?.toLowerCase().includes('technical') ||
-        skill.category?.toLowerCase().includes('programming') ||
-        skill.category?.toLowerCase().includes('software') ||
-        skill.category?.toLowerCase().includes('technology')
+      (skill) => skill.category && skill.category === Skill.Category.TECHNICAL
     );
 
     this.languageSkills = this.userSkills.filter(
-      (skill) =>
-        skill.category?.toLowerCase().includes('language') ||
-        skill.category?.toLowerCase().includes('linguistic')
+      (skill) => skill.category && skill.category === Skill.Category.LANGUAGE
     );
 
     this.otherSkills = this.userSkills.filter(
@@ -341,19 +370,17 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private categorizeTimelineEntries() {
-    this.jobEntries = this.timelineEntries
-      .filter((entry) => entry.timelineEntryType?.toLowerCase() === 'job')
-      .sort(
-        (a, b) =>
-          new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-      );
+    this.jobEntries = this.timelineEntries.filter(
+      (entry) =>
+        entry.timelineEntryType &&
+        entry.timelineEntryType === TimelineEntry.Type.Job
+    );
 
-    this.educationEntries = this.timelineEntries
-      .filter((entry) => entry.timelineEntryType?.toLowerCase() === 'education')
-      .sort(
-        (a, b) =>
-          new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-      );
+    this.educationEntries = this.timelineEntries.filter(
+      (entry) =>
+        entry.timelineEntryType &&
+        entry.timelineEntryType === TimelineEntry.Type.Education
+    );
   }
 
   // Skill CRUD operations
@@ -406,7 +433,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     formData.append('level', formValue.level);
     formData.append('description', formValue.description || '');
     formData.append(
-      'yearsOfExperience',
+      'years_of_experience',
       formValue.yearsOfExperience?.toString() || ''
     );
     formData.append('visibility', formValue.visibility);
@@ -523,6 +550,7 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onSubmitTimeline() {
+    // todo next version: separate file upload requests to remove FormData for the rest
     if (this.timelineForm.invalid || !this.user) {
       this.markFormGroupTouched(this.timelineForm);
       return;
@@ -535,14 +563,14 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     formData.append('title', formValue.title);
     formData.append('organisation', formValue.organisation);
     formData.append('location', formValue.location);
-    formData.append('timelineEntryType', formValue.timelineEntryType);
+    formData.append('timeline_entry_type', formValue.timelineEntryType);
     formData.append('description', formValue.description || '');
-    formData.append('startDate', formValue.startDate.toISOString());
-    formData.append(
-      'endDate',
-      formValue.endDate ? formValue.endDate.toISOString() : ''
-    );
+    formData.append('start_date', Utilities.getISODate(formValue.startDate));
     formData.append('visibility', formValue.visibility);
+
+    if (formValue.endDate) {
+      formData.append('end_date', Utilities.getISODate(formValue.endDate));
+    }
 
     if (formValue.documentation) {
       formData.append('documentation', formValue.documentation);
@@ -724,49 +752,6 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  formatDateRange(startDate: Date, endDate?: Date): string {
-    const start = new Date(startDate).toLocaleDateString('en-US', {
-      //todo probably change to other locale
-      month: 'short',
-      year: 'numeric',
-    });
-
-    if (!endDate) {
-      return `${start} - Present`;
-    }
-
-    const end = new Date(endDate).toLocaleDateString('en-US', {
-      //todo probably change to other locale
-      month: 'short',
-      year: 'numeric',
-    });
-
-    return `${start} - ${end}`;
-  }
-
-  calculateDuration(startDate: Date, endDate?: Date): string {
-    const start = new Date(startDate);
-    const end = endDate ? new Date(endDate) : new Date();
-
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
-
-    if (diffMonths < 12) {
-      return `${diffMonths} month${diffMonths !== 1 ? 's' : ''}`;
-    }
-
-    const years = Math.floor(diffMonths / 12);
-    const remainingMonths = diffMonths % 12;
-
-    if (remainingMonths === 0) {
-      return `${years} year${years !== 1 ? 's' : ''}`;
-    }
-
-    return `${years} year${years !== 1 ? 's' : ''} ${remainingMonths} month${
-      remainingMonths !== 1 ? 's' : ''
-    }`;
-  }
-
   getRelativeTime(date: Date): string {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -814,6 +799,19 @@ export class UserDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
   setSelectedSkill(skill: UserSkill | null) {
     this.selectedSkill = skill;
+  }
+
+  onViewDocumentation(entry: UserTimelineEntry) {
+    console.log(
+      'viewDocumentation called. documentation:',
+      entry.documentation
+    );
+
+    if (!Utilities.isString(entry.documentation)) {
+      return;
+    }
+
+    window.open(entry.documentation, '_blank');
   }
 }
 

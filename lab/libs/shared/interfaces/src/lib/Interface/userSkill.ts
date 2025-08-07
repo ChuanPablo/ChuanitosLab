@@ -1,5 +1,26 @@
-import { Visibility, Skill } from '@lab/shared-utils';
+import { Visibility } from './User';
+/**
+ * @summary List of constants related to Skill
+ */
+export const Skill = {
+  Category: {
+    TECHNICAL: 'technical',
+    LANGUAGE: 'language',
+    SOFT: 'soft',
+    CREATIVE: 'creative',
+    OTHER: 'other',
+  },
+  Level: {
+    Beginner: 'beginner',
+    Intermediate: 'intermediate',
+    Advanced: 'advanced',
+    Expert: 'expert',
+  }
+}
 
+/**
+ * @summary User skill interface
+ */
 export interface UserSkill {
   id: number;
   userId: number;

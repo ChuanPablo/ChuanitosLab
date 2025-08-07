@@ -15,7 +15,9 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@lab/core-base": ["libs/core/base/src/index.ts"],
       "@lab/core-services": ["libs/core/services/src/index.ts"],
+      "@lab/injection-tokens": ["libs/shared/tokens/src/index.ts"],
       "@lab/layout-ui": ["libs/layout/ui/src/index.ts"],
       "@lab/shared-interfaces": ["libs/shared/interfaces/src/index.ts"],
       "@lab/shared-ui": ["libs/shared/ui/src/index.ts"],

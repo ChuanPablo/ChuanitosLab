@@ -1,16 +1,28 @@
-import { Component, Inject, Type, ViewChild, ComponentRef, AfterViewInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import {
+  AfterViewInit,
+  Component,
+  ComponentRef,
+  Inject,
+  OnDestroy,
+  Type,
+  ViewChild,
+} from '@angular/core';
+import { CommonModule, NgComponentOutlet } from '@angular/common';
+import {
+  MAT_DIALOG_DATA,
+  MatDialogModule,
+  MatDialogRef,
+} from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { NgComponentOutlet } from '@angular/common';
 import { Subscription } from 'rxjs';
 
 export interface GenericDialogData {
   title: string;
   component: Type<any>;
   componentInputs?: any;
+  noScroll?: boolean;
 }
 
 @Component({
@@ -29,11 +41,16 @@ export interface GenericDialogData {
 export class GenericDialogComponent implements AfterViewInit, OnDestroy {
   @ViewChild(NgComponentOutlet, { static: false }) componentOutlet!: NgComponentOutlet;
   private subscriptions: Subscription[] = [];
+  public noScroll = false;
 
   constructor(
     public dialogRef: MatDialogRef<GenericDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: GenericDialogData
-  ) {}
+  ) {
+    if(data.noScroll) {
+      this.noScroll = true;
+    }
+  }
 
   ngAfterViewInit(): void {
     // Wait for the component to be initialized and check for events
@@ -52,6 +69,13 @@ export class GenericDialogComponent implements AfterViewInit, OnDestroy {
         if (componentRef.instance.editUser) {
           const sub = componentRef.instance.editUser.subscribe((user: any) => {
             this.dialogRef.close({ action: 'editUser', data: user });
+          });
+          this.subscriptions.push(sub);
+        }
+
+        if(componentRef.instance.editingCanceled) {
+          const sub = componentRef.instance.editingCanceled.subscribe(() => {
+            this.onClose();
           });
           this.subscriptions.push(sub);
         }

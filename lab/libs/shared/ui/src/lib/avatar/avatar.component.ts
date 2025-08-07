@@ -1,6 +1,7 @@
 import { booleanAttribute, Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { BaseFileFormControl, User } from '@lab/shared-interfaces';
+import { BaseFileFormControl } from '@lab/core-base';
+import { User } from '@lab/shared-interfaces';
 import { MatIcon } from '@angular/material/icon';
 import {
   AbstractControl,

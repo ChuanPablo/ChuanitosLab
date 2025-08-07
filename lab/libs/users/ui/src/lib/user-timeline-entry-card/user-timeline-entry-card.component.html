@@ -1,0 +1,59 @@
+<div class="timeline-entry-card">
+  <div class="card-header">
+    <div class="icon-container">
+      <div class="icon-wrapper" [class.job-icon]="type === 'job'" [class.education-icon]="type === 'edu'">
+        <mat-icon>{{ icon }}</mat-icon>
+      </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="main-content">
+        <h3 class="entry-title">{{ timelineEntry.title }}</h3>
+        <p class="entry-organisation">{{ timelineEntry.organisation }}</p>
+
+        <div class="metadata-row">
+          <div class="date-info">
+            <mat-icon class="metadata-icon">schedule</mat-icon>
+            <span class="date-range">{{ formatDateRange() }}</span>
+            <span class="duration-badge">{{ calculateDuration() }}</span>
+          </div>
+
+          <div *ngIf="timelineEntry.location" class="location-info">
+            <mat-icon class="metadata-icon">place</mat-icon>
+            <span>{{ timelineEntry.location }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-buttons">
+        <button *ngIf="canEditUser(timelineEntry.userId)"
+                mat-icon-button
+                (click)="onEditTimelineEntry()"
+                class="action-button edit-button"
+                matTooltip="Edit">
+          <mat-icon>edit</mat-icon>
+        </button>
+
+        <button *ngIf="canEditUser(timelineEntry.userId)"
+                mat-icon-button
+                (click)="onDeleteTimelineEntry()"
+                class="action-button delete-button"
+                matTooltip="Delete">
+          <mat-icon>delete</mat-icon>
+        </button>
+
+        <button *ngIf="timelineEntry.documentation"
+                mat-icon-button
+                (click)="onViewDocumentation()"
+                class="action-button pdf-button"
+                matTooltip="View Documentation">
+          <mat-icon>description</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="timelineEntry.description" class="card-description">
+    <p>{{ timelineEntry.description }}</p>
+  </div>
+</div>

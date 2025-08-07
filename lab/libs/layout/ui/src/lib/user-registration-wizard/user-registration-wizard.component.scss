@@ -32,14 +32,13 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
-// Main container
+// Main container - FIXED for dialog use
 .registration-wizard-container {
-  min-height: 100vh;
   background: $background-gradient;
-  @include flex-center;
-  flex-direction: column;
-  padding: 20px;
+  padding: 2rem;
   position: relative;
+  width: 71vw;
+  height: 90vh;
 
   &::before {
     content: '';
@@ -100,7 +99,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 .mat-stepper-horizontal {
   .mat-step-header {
     padding: 16px 24px;
-    
+
     .mat-step-icon {
       background-color: $primary-color;
       color: white;
@@ -123,7 +122,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 // Step content
 .step-content {
   padding: 32px;
-  min-height: 400px;
+  min-height: 350px; // Reduced from 400px
   animation: fadeInUp 0.4s ease-out;
 }
 
@@ -211,7 +210,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   @media (max-width: 480px) {
     flex-direction: column;
-    
+
     .mat-mdc-button,
     .mat-mdc-raised-button {
       width: 100%;
@@ -236,7 +235,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 .back-button {
   @include button-hover;
   color: $secondary-color;
-  
+
   mat-icon {
     margin-right: 8px;
   }
@@ -253,10 +252,11 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 // Progress indicator
 .progress-indicator {
   @include flex-center;
-  margin-top: 24px;
+  margin-top: 16px; // Reduced from 24px
   gap: 8px;
   position: relative;
   z-index: 1;
+  padding-bottom: 16px; // Add some bottom padding
 }
 
 .progress-step {
@@ -328,7 +328,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 // Responsive design
 @media (max-width: 768px) {
   .registration-wizard-container {
-    padding: 16px;
+    padding: 0.8rem; // Keep no padding for mobile too
   }
 
   .wizard-card {
@@ -337,7 +337,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   .step-content {
     padding: 24px 16px;
-    min-height: 350px;
+    min-height: 300px; // Reduced min-height for mobile
   }
 
   .step-header {
@@ -355,7 +355,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .progress-indicator {
-    margin-top: 16px;
+    margin-top: 12px; // Further reduced for mobile
   }
 
   .progress-step {
@@ -415,7 +415,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 // High contrast mode support
-@media (prefers-contrast: high) {
+@media (prefers-contrast: more) {
   .registration-wizard-container {
     background: #000;
   }

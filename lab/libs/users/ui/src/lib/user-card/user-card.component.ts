@@ -9,6 +9,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { User } from '@lab/shared-interfaces'
 import { AvatarComponent, AvatarSize } from '@lab/shared-ui';
 import { UserAuthUtilsService } from '@lab/core-services';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'lib-user-card',
@@ -22,6 +23,7 @@ import { UserAuthUtilsService } from '@lab/core-services';
     MatMenuModule,
     MatDividerModule,
     AvatarComponent,
+    RouterLink,
   ],
   templateUrl: './user-card.component.html',
   styleUrl: './user-card.component.scss',
@@ -49,26 +51,24 @@ export class UserCardComponent {
     return this.authUtils.canDeleteUser(userId, targetUserIsStaff);
   }
 
-  onEdit() {
+  onEdit(event: Event) {
+    event.stopPropagation();
     this.editUser.emit(this.user);
   }
 
-  onDelete() {
+  onDelete(event: Event) {
+    event.stopPropagation();
     this.deleteUser.emit(this.user);
   }
 
-  onToggleStatus() {
+  onToggleStatus(event: Event) {
+    event.stopPropagation();
     this.toggleStatus.emit(this.user);
   }
 
-  onViewDetails() {
+  onViewDetails(event: Event) {
+    event.stopPropagation();
     this.viewDetails.emit(this.user);
-  }
-
-  getInitials(): string {
-    return `${this.user.firstName?.charAt(0).toUpperCase()} ${this.user.lastName
-      ?.charAt(0)
-      .toUpperCase()}`;
   }
 
   getFullName() {

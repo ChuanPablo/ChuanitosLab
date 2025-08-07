@@ -1,7 +1,15 @@
+export const SearchSuggestionMatchTypes = {
+  Name: 'name',
+  Username: 'username',
+  Email: 'email',
+  Organisation: 'organisation',
+  Skill: 'skill',
+}
+
 /**
  * @summary List of keys used in the local storage
  */
-export const LocalStorageKeys = {
+export const StorageKeys = {
   AuthToken: 'auth_token',
   UserData: 'user_data',
   RefreshToken: 'refresh_token',
@@ -13,6 +21,7 @@ export const LocalStorageKeys = {
 export const ApiEndpoints = {
   Prefix: 'api',
   Token: 'token',
+  Refresh: 'refresh',
   Auth: 'auth',
   EmailSubmit: 'email-submit',
   Verify: 'verify-code',
@@ -23,50 +32,15 @@ export const ApiEndpoints = {
   Me: 'me',
 } as const;
 
-
 /**
- * @summary List of API's data entries visibility options
+ * @summary List containing all used base routes
  */
-export const Visibility = {
-  Public: 'public',
-  Private: 'private',
-}
-
-/**
- * @summary List of all available user stati (statusses? :D)
- */
-export const UserStatus = {
-  Active: 'active',
-  Inactive: 'inactive',
-} as const;
-
-/**
- * @summary List of all constants related to TimelineEntry
- */
-export const TimelineEntry = {
-  Type: {
-    Job: 'job',
-    Education: 'edu',
-  }
-} as const;
-
-/**
- * @summary List of constants related to Skill
- */
-export const Skill = {
-  Category: {
-    TECHNICAL: 'technical',
-    LANGUAGE: 'language',
-    SOFT: 'soft',
-    CREATIVE: 'creative',
-    OTHER: 'other',
-  },
-  Level: {
-    Beginner: 'beginner',
-    Intermediate: 'intermediate',
-    Advanced: 'advanced',
-    Expert: 'expert',
-  }
+export const BaseRoutes = {
+  Login: 'login',
+  Dashboard: 'dashboard',
+  Search: 'search',
+  User: 'u',
+  About: 'about',
 }
 
 /**

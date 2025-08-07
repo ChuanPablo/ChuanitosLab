@@ -5,15 +5,17 @@ import {
   LoginComponent,
   MainLayoutComponent,
   NotFoundComponent,
-  UserDetailComponent
+  UserDetailComponent,
+  SearchResultsComponent,
+  AboutComponent,
 } from '@lab/layout-ui';
 import { AuthGuard } from '@lab/core-services';
+import { BaseRoutes } from '@lab/shared-utils';
 
 export const appRoutes: Route[] = [
   {
     path: '',
     component: MainLayoutComponent,
-    //canActivate: [AuthGuard],
     children: [
       {
         path: '',
@@ -21,21 +23,30 @@ export const appRoutes: Route[] = [
         pathMatch: 'full',
       },
       {
-        path: 'dashboard',
+        path: BaseRoutes.Dashboard,
         component: DashboardComponent,
       },
       {
-        path: 'u/:userId',
+        path: BaseRoutes.Search,
+        component: SearchResultsComponent,
+      },
+      {
+        path: BaseRoutes.About,
+        component: AboutComponent,
+      },
+      {
+        path: `${BaseRoutes.User}/:userId`,
         component: UserDetailComponent,
       },
       {
-        path: 'u/:userId/edit',
+        path: `${BaseRoutes.User}/:userId/edit`,
         component: EditUserComponent,
+        canActivate: [AuthGuard],
       }
     ]
   },
   {
-    path: 'login',
+    path: BaseRoutes.Login,
     component: LoginComponent
   },
   {

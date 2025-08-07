@@ -77,6 +77,12 @@ export class UserAuthUtilsService {
       }),
       catchError(error => {
         console.error('Failed to load current user:', error);
+
+        // If we get a 401, the token is invalid - logout the user
+        if (error.status === 401) {
+          this.authService.logout();
+        }
+
         this._currentUser.set(null);
         this._isLoading.set(false);
         return of(null);

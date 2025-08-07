@@ -1,11 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { User, UserDto } from '@lab/shared-interfaces';
-import { ApiEndpoints, UserStatus, LocalStorageKeys } from '@lab/shared-utils';
-import { catchError, EMPTY, map, Observable, throwError } from 'rxjs';
-import { Router } from '@angular/router';
+import { User, UserDto, UserStatus } from '@lab/shared-interfaces';
+import { ApiEndpoints, StorageKeys } from '@lab/shared-utils';
+import { catchError, map, Observable } from 'rxjs';
 import { AuthService } from './auth.service';
+import { StorageService } from './storage.service';
+import { ErrorService } from './error.service';
 
 /**
  * @summary Service handling all user management (except authorisation)
@@ -18,19 +19,26 @@ import { AuthService } from './auth.service';
 export class UserService {
   private config = inject(ConfigService)
   private auth = inject(AuthService)
+  private storageService = inject(StorageService);
+  private errorService = inject(ErrorService);
   private apiUrl = this.config.apiUrl;
 
   private isLoggedIn = this.auth.isLoggedIn
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient) {}
 
   /**
-   * @summary (Getter) Returns HttpHeaders object containing the Bearer token
-   * @description retrieves token from local storage, packs it into a HttpHeaders object and returns it
-   * every time it is called
+   * @summary (Getter) Returns HttpHeaders object containing the Bearer token if authenticated
+   * @description retrieves token from storage, and returns headers with Authorization only if token exists
+   * Returns empty headers if user is not authenticated
    */
   get headers(): HttpHeaders{
-    const token = localStorage.getItem(LocalStorageKeys.AuthToken);
+    const token = this.storageService.get(StorageKeys.AuthToken);
+
+    if (!token) {
+      return new HttpHeaders();
+    }
+
     return new HttpHeaders({
       'Authorization': `Bearer ${token}`
     });
@@ -87,24 +95,8 @@ export class UserService {
     };
   }
 
-  /**
-   * @summary Handle HTTP errors with authentication check
-   * @description Common error handler that redirects to login on 401
-   * @param error - HTTP error response
-   * @param operation - Name of the operation for logging
-   * @returns Observable that throws formatted error
-   */
-  private handleError(operation: string) {
-    return (error: any): Observable<never> => {
-      if (error.status === 401) {
-        this.router.navigate(['/login']);
-        return EMPTY;
-      }
-      return throwError(() => ({
-        message: `Error during ${operation}`,
-        originalError: error
-      }));
-    };
+  getAllUsersLimited(limit: number){
+    return this.getUsers(new URLSearchParams({l: limit.toString()}));
   }
 
   /**
@@ -115,12 +107,11 @@ export class UserService {
    * @returns Observable<User[]>
    * @throws Observable<never> when something went wrong during fetching of user data / redirects to login page when unauthorized
    */
-  getAllUsers(): Observable<User[]> {
-    console.log('Making request with URL:', `${this.apiUrl()}${ApiEndpoints.Users}`);
-    return this.http.get<UserDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}`, this.isLoggedIn() ? { headers: this.headers } : {})
+  getUsers(params?: URLSearchParams): Observable<User[]> {
+    return this.http.get<UserDto[]>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}${params ? '?' : ''}${params ? params.toString() : ''}`, this.isLoggedIn() ? { headers: this.headers } : {})
       .pipe(
         map((users) => users.map(user => this.mapDtoToUser(user))),
-        catchError(this.handleError('fetch all users'))
+        catchError(this.errorService.handleError('fetch all users'))
       );
   }
 
@@ -135,7 +126,7 @@ export class UserService {
     return this.http.get<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}`, this.isLoggedIn() ? { headers: this.headers } : {})
       .pipe(
         map(userDto => this.mapDtoToUser(userDto)),
-        catchError(this.handleError('fetch user by ID'))
+        catchError(this.errorService.handleError('fetch user by ID'))
       );
   }
 
@@ -150,7 +141,7 @@ export class UserService {
     return this.http.post<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/`, user, { headers: this.headers })
       .pipe(
         map(createdUserDto => this.mapDtoToUser(createdUserDto)),
-        catchError(this.handleError('create user'))
+        catchError(this.errorService.handleError('create user'))
       );
   }
 
@@ -166,7 +157,7 @@ export class UserService {
     return this.http.patch<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/`, user, { headers: this.headers })
       .pipe(
         map(updatedUserDto => this.mapDtoToUser(updatedUserDto)),
-        catchError(this.handleError('update user'))
+        catchError(this.errorService.handleError('update user'))
       );
   }
 
@@ -180,7 +171,7 @@ export class UserService {
   deleteUser(userId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${userId}/`, { headers: this.headers })
       .pipe(
-        catchError(this.handleError('delete user'))
+        catchError(this.errorService.handleError('delete user'))
       );
   }
 
@@ -194,7 +185,24 @@ export class UserService {
     return this.http.get<UserDto>(`${this.apiUrl()}/${ApiEndpoints.Prefix}/${ApiEndpoints.Users}/${ApiEndpoints.Me}`, { headers: this.headers })
       .pipe(
         map(userDto => this.mapDtoToUser(userDto)),
-        catchError(this.handleError('fetch current user'))
+        catchError(this.errorService.handleError('fetch current user'))
       );
+  }
+
+  /**
+   * @summary Searches users by name and company
+   * @description Sends HTTP GET request to search users with query parameters
+   * @param query - The search query string
+   * @param limit - Optional limit for number of results (default: 10)
+   * @returns Observable<User[]> - Array of matching users
+   * @throws Observable<never> when search fails or unauthorized
+   */
+  searchUsers(query: string, limit = 10): Observable<User[]> {
+    const params = new URLSearchParams({
+      q: query.trim(),
+      l: limit.toString()
+    });
+
+    return this.getUsers(params)
   }
 }
