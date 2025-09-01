@@ -215,9 +215,11 @@
 }
 
 .scrollable-content {
+  height: 100%;
   flex: 1;
   overflow-y: auto;
   padding: 0 0 1.5rem 0;
+  margin-bottom: 1.5rem;
 
   &.compact {
     padding-top: 2rem !important;
@@ -243,6 +245,7 @@
 }
 
 .main-content {
+  height: 100vh;
   display: grid;
   grid-template-columns: 25rem 1fr;
   gap: 1.5rem;
@@ -275,21 +278,21 @@ mat-card-title {
     padding-bottom: 0;
 
 
-      mat-icon {
-        color: #6366f1;
-      }
-
-      mat-chip {
-        margin-left: auto;
-        font-size: 0.75rem;
-        min-height: 1.5rem;
-      }
+    mat-icon {
+      color: #6366f1;
     }
 
-    .header-actions {
+    mat-chip {
       margin-left: auto;
+      font-size: 0.75rem;
+      min-height: 1.5rem;
     }
   }
+
+  .header-actions {
+    margin-left: auto;
+  }
+}
 
 .empty-state {
   display: flex;
@@ -317,6 +320,10 @@ mat-card-title {
   button {
     margin-top: 0.5rem;
   }
+}
+
+mat-tab-body {
+  height: 100%;
 }
 
 mat-card-content {
@@ -374,45 +381,46 @@ mat-card-content {
 .timeline-container-card {
   border-radius: 0.75rem;
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+  height: 100%;
 
   mat-card-header {
     padding-bottom: 0;
 
-      mat-icon {
-        color: #10b981;
-      }
-
-      mat-chip {
-        margin-left: auto;
-        font-size: 0.75rem;
-        min-height: 1.5rem;
-      }
+    mat-icon {
+      color: #10b981;
     }
 
-    .header-actions {
+    mat-chip {
       margin-left: auto;
+      font-size: 0.75rem;
+      min-height: 1.5rem;
     }
   }
 
-  mat-card-content {
-    padding-top: 1rem;
+  .header-actions {
+    margin-left: auto;
+  }
+}
 
-    mat-tab-group {
-      .mat-mdc-tab-label {
-        font-weight: 500;
-      }
+mat-card-content {
+  padding-top: 1rem;
+  height: 100%;
 
-      .timeline-content {
-        padding: 1.5rem 0;
-        max-height: 37.5rem;
-        overflow-y: auto;
+  mat-tab-group {
+    .mat-mdc-tab-label {
+      font-weight: 500;
+    }
 
-        mat-divider{
-          margin: 1rem 0;
-        }
+    .timeline-content {
+      padding: 1.5rem 0;
+      overflow-y: auto;
+
+      mat-divider{
+        margin: 1rem 0;
       }
     }
   }
+}
 
 .additional-info-card {
   border-radius: 0.75rem;
@@ -420,32 +428,32 @@ mat-card-content {
   margin-top: 1.5rem;
 
   mat-card-header {
-      mat-icon {
-        color: #8b5cf6;
-      }
+    mat-icon {
+      color: #8b5cf6;
     }
   }
+}
 
-  .info-section {
-    margin-bottom: 1.5rem;
+.info-section {
+  margin-bottom: 1.5rem;
 
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    h4 {
-      font-size: 1rem;
-      font-weight: 600;
-      margin: 0 0 0.5rem 0;
-      color: #1f2937;
-    }
-
-    p {
-      margin: 0;
-      color: #4b5563;
-      line-height: 1.6;
-    }
+  &:last-child {
+    margin-bottom: 0;
   }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  p {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.6;
+  }
+}
 
 .loading-container,
 .error-container {
@@ -511,8 +519,10 @@ mat-card-content {
   }
 
   .main-content {
+    height: 100%;
     .side-panel,
     .main-panel {
+
       .mat-mdc-card {
         .mat-mdc-card-header {
           flex-direction: column;

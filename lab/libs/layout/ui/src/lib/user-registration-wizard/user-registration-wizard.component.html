@@ -34,14 +34,13 @@
               </mat-form-field>
 
               <div class="step-actions">
-                <button mat-raised-button
-                        color="primary"
-                        type="submit"
-                        class="next-button">
-                  <mat-spinner *ngIf="isSubmittingEmail" diameter="20"></mat-spinner>
-                  <span *ngIf="!isSubmittingEmail">Send Verification Code</span>
-                  <span *ngIf="isSubmittingEmail">Sending...</span>
-                </button>
+                <lib-shared-ui-raised-spinner-button
+                  [isLoading]="isSubmittingEmail"
+                  type="submit"
+                  class="next-button">
+                  <span>Send Verification Code</span>
+                  <span loading>Sending...</span>
+                </lib-shared-ui-raised-spinner-button>
               </div>
             </form>
           </div>
@@ -79,14 +78,13 @@
                   Back
                 </button>
 
-                <button mat-raised-button
-                        color="primary"
-                        type="submit"
-                        class="next-button">
-                  <mat-spinner *ngIf="isVerifyingCode" diameter="20"></mat-spinner>
-                  <span *ngIf="!isVerifyingCode">Verify Code</span>
-                  <span *ngIf="isVerifyingCode">Verifying...</span>
-                </button>
+                <lib-shared-ui-raised-spinner-button
+                    [isLoading]="isVerifyingCode"
+                    type="submit"
+                    class="next-button">
+                  <span>Verify Code</span>
+                  <span loading>Verifying...</span>
+                </lib-shared-ui-raised-spinner-button>
               </div>
             </form>
           </div>
@@ -176,14 +174,13 @@
                   Back
                 </button>
 
-                <button mat-raised-button
-                        color="primary"
-                        type="submit"
-                        class="submit-button">
-                  <mat-spinner *ngIf="isRegistering" diameter="20"></mat-spinner>
-                  <span *ngIf="!isRegistering">Complete Registration</span>
-                  <span *ngIf="isRegistering">Creating Account...</span>
-                </button>
+                <lib-shared-ui-raised-spinner-button
+                  [isLoading]="isRegistering"
+                  type="submit"
+                  class="next-button">
+                  <span>Complete Registration</span>
+                  <span loading>Creating Account...</span>
+                </lib-shared-ui-raised-spinner-button>
               </div>
             </form>
           </div>

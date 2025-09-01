@@ -35,10 +35,10 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 // Main container - FIXED for dialog use
 .registration-wizard-container {
   background: $background-gradient;
-  padding: 2rem;
+  padding: 2.6rem;
   position: relative;
-  width: 71vw;
-  height: 90vh;
+  scrollbar-width: thin;
+  margin: auto;
 
   &::before {
     content: '';

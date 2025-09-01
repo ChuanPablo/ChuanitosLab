@@ -1,6 +1,13 @@
-import { Component, inject, OnInit, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, inject, OnInit, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -9,10 +16,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatCardModule } from '@angular/material/card';
-import { Router } from '@angular/router';
 import { AuthService } from '@lab/core-services';
-import { EmailSubmissionResponse, CodeVerificationResponse, UserRegistrationResponse } from '@lab/shared-interfaces';
+import { CodeVerificationResponse, EmailSubmissionResponse, UserRegistrationResponse } from '@lab/shared-interfaces';
 import { Utilities } from '@lab/shared-utils';
+import { RaisedSpinnerButtonComponent } from '@lab/shared-ui';
 
 /**
  * @summary Component for the user registration wizard
@@ -35,7 +42,8 @@ import { Utilities } from '@lab/shared-utils';
     MatIconModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatCardModule
+    MatCardModule,
+    RaisedSpinnerButtonComponent,
   ],
   templateUrl: './user-registration-wizard.component.html',
   styleUrls: ['./user-registration-wizard.component.scss'],
@@ -71,22 +79,25 @@ export class UserRegistrationWizardComponent implements OnInit {
   private initializeForms() {
     // Step 1: Email form
     this.emailForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]]
+      email: ['', [Validators.required, Validators.email]],
     });
 
     // Step 2: Code verification form
     this.codeForm = this.fb.group({
-      code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]]
+      code: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]],
     });
 
     // Step 3: Registration form
-    this.registrationForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
-      password: ['', [Validators.required, Validators.minLength(8)]],
-      passwordConfirm: ['', [Validators.required]],
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]]
-    }, { validators: this.passwordMatchValidator });
+    this.registrationForm = this.fb.group(
+      {
+        username: ['', [Validators.required, Validators.minLength(3)]],
+        password: ['', [Validators.required, Validators.minLength(8)]],
+        passwordConfirm: ['', [Validators.required]],
+        firstName: ['', [Validators.required, Validators.minLength(2)]],
+        lastName: ['', [Validators.required, Validators.minLength(2)]],
+      },
+      { validators: this.passwordMatchValidator }
+    );
   }
 
   // Custom validator for password confirmation
@@ -113,7 +124,7 @@ export class UserRegistrationWizardComponent implements OnInit {
           this.isEmailSubmitted = true;
           this.snackBar.open(response.message, 'Close', {
             duration: 5000,
-            panelClass: ['success-snackbar']
+            panelClass: ['success-snackbar'],
           });
           this.currentStep = 1;
         } else {
@@ -142,7 +153,7 @@ export class UserRegistrationWizardComponent implements OnInit {
 
     this.snackBar.open(errorMessage, 'Close', {
       duration: 5000,
-      panelClass: ['error-snackbar']
+      panelClass: ['error-snackbar'],
     });
   }
 
@@ -160,7 +171,7 @@ export class UserRegistrationWizardComponent implements OnInit {
           this.isEmailVerified = true;
           this.snackBar.open('Email verified successfully!', 'Close', {
             duration: 3000,
-            panelClass: ['success-snackbar']
+            panelClass: ['success-snackbar'],
           });
           this.currentStep = 2;
         } else {
@@ -175,7 +186,9 @@ export class UserRegistrationWizardComponent implements OnInit {
   }
 
   private handleCodeError(error: any) {
-    const errorMessage = error.non_field_errors ? error.non_field_errors[0] : 'Invalid verification code. Please try again.';
+    const errorMessage = error.non_field_errors
+      ? error.non_field_errors[0]
+      : 'Invalid verification code. Please try again.';
 
     if (error?.non_field_errors && error.non_field_errors.length > 0) {
       console.log(error.non_field_errors[0]);
@@ -185,7 +198,7 @@ export class UserRegistrationWizardComponent implements OnInit {
 
     this.snackBar.open(errorMessage, 'Close', {
       duration: 5000,
-      panelClass: ['error-snackbar']
+      panelClass: ['error-snackbar'],
     });
   }
 
@@ -217,7 +230,7 @@ export class UserRegistrationWizardComponent implements OnInit {
           this.isRegistrationCompleted = true;
           this.snackBar.open('Registration completed successfully!', 'Close', {
             duration: 5000,
-            panelClass: ['success-snackbar']
+            panelClass: ['success-snackbar'],
           });
 
           // emit event after successful registration
@@ -244,7 +257,7 @@ export class UserRegistrationWizardComponent implements OnInit {
 
     this.snackBar.open(errorMessage, 'Close', {
       duration: 5000,
-      panelClass: ['error-snackbar']
+      panelClass: ['error-snackbar'],
     });
   }
 
@@ -292,7 +305,9 @@ export class UserRegistrationWizardComponent implements OnInit {
     }
     if (control?.hasError('minlength')) {
       const minLength = control.errors?.['minlength'].requiredLength;
-      return `${Utilities.getFormFieldDisplayNames(fieldName)} must be at least ${minLength} characters`;
+      return `${Utilities.getFormFieldDisplayNames(
+        fieldName
+      )} must be at least ${minLength} characters`;
     }
     return '';
   }

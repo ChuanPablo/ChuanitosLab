@@ -8,9 +8,9 @@
   padding: 0;
   min-width: 400px;
   max-width: 95vw;
-  max-height: 95vh;
+  max-height: calc(95vh - 2.5rem);
   overflow-y: auto;
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
 .mat-toolbar-single-row {
   height: 2.5rem;

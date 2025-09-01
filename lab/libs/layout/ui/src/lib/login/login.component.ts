@@ -1,8 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterModule, Router } from '@angular/router';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { AuthService, DialogService } from '@lab/core-services';
-import { CommonModule} from "@angular/common";
+import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
@@ -85,7 +90,6 @@ export class LoginComponent implements OnInit {
    * event handler for when login button is pressed. validates input and calls API
    */
   onLogin() {
-
     if (this.loginForm.valid) {
       const { email, password, rememberMe } = this.loginForm.value;
       this.isLoading = true;
@@ -107,7 +111,8 @@ export class LoginComponent implements OnInit {
           if (err.status === 401) {
             errorMessage = 'Invalid email or password.';
           } else if (err.status === 0) {
-            errorMessage = 'Unable to connect to server. Please check your connection.';
+            errorMessage =
+              'Unable to connect to server. Please check your connection.';
           }
           this.snackBar.open(errorMessage, 'Close', {
             duration: 5000,
@@ -162,7 +167,7 @@ export class LoginComponent implements OnInit {
     this.dialogService.openGenericDialog({
       title: 'Sign Up',
       componentClass: UserRegistrationWizardComponent,
-      noScroll: true
-    })
+      //noScroll: true
+    });
   }
 }

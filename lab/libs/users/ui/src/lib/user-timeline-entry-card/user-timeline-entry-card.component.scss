@@ -203,10 +203,11 @@ $radius-lg: 1rem;
 
   // Card Description
   .card-description {
-    padding: 0 1.5rem 1.5rem 1.5rem;
+    padding: 1.5rem;
     border-top: 1px solid $border-color;
     margin-top: 0.5rem;
-    padding-top: 1rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 
     p {
       color: $text-secondary;
