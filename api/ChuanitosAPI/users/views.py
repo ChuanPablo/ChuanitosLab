@@ -3,7 +3,7 @@ from django.core.mail import send_mail
 from django.db.models import Q, Value, OuterRef, Exists
 from django.db.models.functions import Concat
 from rest_framework import viewsets, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,6 +19,7 @@ from .serializers import (
 
 
 class EmailSubmissionView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = EmailSubmissionSerializer(data=request.data)
@@ -50,6 +51,7 @@ class EmailSubmissionView(APIView):
 
 
 class CodeVerificationView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = CodeVerificationSerializer(data=request.data)
@@ -68,6 +70,7 @@ class CodeVerificationView(APIView):
 
 
 class UserRegistrationView(APIView):
+    permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get('email')

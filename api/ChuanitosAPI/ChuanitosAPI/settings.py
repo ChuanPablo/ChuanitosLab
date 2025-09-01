@@ -36,6 +36,8 @@ if not dockerized:
     # Only load .env if not in production
     from dotenv import load_dotenv
     env_path = Path('.') / '.env'
+    if os.environ.get('DJANGO_ENV') == 'production':
+        env_path = Path('.') / 'prod.env'
     load_dotenv(dotenv_path=env_path)
     DEBUG = True
     CORS_ALLOW_ALL_ORIGINS = True
@@ -83,7 +85,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'ChuanitosAPI.middleware.OnlineStatusMiddleware',
     'ChuanitosAPI.middleware.DebugMiddleware',
 ]
 
@@ -92,7 +93,7 @@ REST_FRAMEWORK = {
       'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'ChuanitosAPI.auth.LastOnlineJWTAuthentication',
     )
 }
 
@@ -118,7 +119,8 @@ WSGI_APPLICATION = 'ChuanitosAPI.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+if not dockerized:
+    print(os.getenv('DATABASE_URL'))
 DATABASES = {
     'default': dj_database_url.parse(os.getenv('DATABASE_URL'))
 }

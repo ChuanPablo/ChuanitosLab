@@ -6,8 +6,9 @@ User = get_user_model()
 
 class OnlineStatusMiddleware:
     """
-        Middleware handling last_online field of the custom user model
-        updates with every request from authenticated users
+    Middleware handling last_online field of the custom user model
+    updates with every request from authenticated users
+    Replaced by Authentification class in auth.py
     """
     def __init__(self, get_response):
         self.get_response = get_response
